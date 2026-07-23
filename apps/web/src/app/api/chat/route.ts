@@ -104,12 +104,7 @@ Be concise, brilliant, and extremely helpful.`
       }
     })
 
-    // Return the streaming response along with the chatId in custom headers
-    // so the client knows the generated chatId if a new one was created.
-    const { toUIMessageStream, createUIMessageStreamResponse } = await import("ai")
-    
-    return createUIMessageStreamResponse({
-      stream: toUIMessageStream(result.stream),
+    return result.toUIMessageStreamResponse({
       headers: {
         "x-chat-id": activeChatId
       }
