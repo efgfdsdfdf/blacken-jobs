@@ -28,7 +28,7 @@ export function ChatInterface({
     onResponse: (response) => {
       const newChatId = response.headers.get("x-chat-id")
       if (newChatId && chatId === "new") {
-        window.history.replaceState(null, "", `/dashboard/chat/${newChatId}`)
+        window.history.replaceState(null, "", `/chat/${newChatId}`)
       }
     }
   })

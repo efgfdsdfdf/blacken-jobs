@@ -32,15 +32,7 @@ export function ChatSidebar({ className }: { className?: string }) {
 
   const fetchChats = React.useCallback(async () => {
     try {
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-
-      const res = await fetch("http://localhost:4000/api/v1/chats", {
-        headers: {
-          "Authorization": `Bearer ${session?.access_token}`
-        },
-        credentials: "include"
-      })
+      const res = await fetch("/api/chats")
       if (res.ok) {
         const json = await res.json()
         setChats(json.data)
@@ -56,30 +48,8 @@ export function ChatSidebar({ className }: { className?: string }) {
     fetchChats()
   }, [fetchChats])
 
-  const handleNewChat = async () => {
-    try {
-      // Get the Supabase session token
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      const res = await fetch("http://localhost:4000/api/v1/chats", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${session?.access_token}`
-        },
-        credentials: "include"
-      })
-      if (res.ok) {
-        const json = await res.json()
-        router.push(`/chat/${json.data.id}`)
-        fetchChats()
-      } else {
-        toast.error("Failed to create chat. Is the backend running?")
-      }
-    } catch (error) {
-      console.error("Failed to create chat:", error)
-      toast.error("Cannot connect to server. Did you start the backend?")
-    }
+  const handleNewChat = () => {
+    router.push('/chat')
   }
 
   return (
