@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@repo/db"
 import { anthropic } from "@ai-sdk/anthropic"
 import { streamText } from "ai"
-import { NextResponse } from "next"
+import { NextResponse } from "next/server"
 
 export const maxDuration = 60 // Allow up to 60 seconds for AI response
 
@@ -112,8 +112,8 @@ Be concise, brilliant, and extremely helpful.`
       }
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Chat API error:", error)
-    return new NextResponse("Internal Server Error", { status: 500 })
+    return new NextResponse(`Internal Server Error: ${error.message || error}`, { status: 500 })
   }
 }

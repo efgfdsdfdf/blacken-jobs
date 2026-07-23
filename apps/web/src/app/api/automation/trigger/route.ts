@@ -1,6 +1,6 @@
 import { requireAuth } from "@/dal/auth"
 import { prisma } from "@repo/db"
-import { NextResponse } from "next"
+import { NextResponse } from "next/server"
 import { anthropic } from "@ai-sdk/anthropic"
 import { generateText } from "ai"
 import { Resend } from "resend"
