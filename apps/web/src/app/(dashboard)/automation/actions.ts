@@ -50,12 +50,19 @@ export async function forceRunJobWorker() {
   const user = await requireAuth()
   
   try {
-    const automation = await prisma.automation.findFirst({
-      where: { userId: user.id, isActive: true }
+    let automation = await prisma.automation.findFirst({
+      where: { userId: user.id }
     })
 
     if (!automation) {
-      return false
+      automation = await prisma.automation.create({
+        data: {
+          userId: user.id,
+          name: "Primary Agent",
+          isActive: false,
+          autoApply: true
+        }
+      })
     }
 
     // --- STEP 1: Log initialization ---
