@@ -1,61 +1,25 @@
-"use server"
-
 import { requireAuth } from "@/dal/auth"
 import { prisma } from "@repo/db"
-
-export async function toggleAutomation(isActive: boolean) {
-  const user = await requireAuth()
-
-  let automation = await prisma.automation.findFirst({
-    where: { userId: user.id }
-  })
-
-  if (automation) {
-    await prisma.automation.update({
-      where: { id: automation.id },
-      data: { isActive }
-    })
-  } else {
-    await prisma.automation.create({
-      data: {
-        userId: user.id,
-        name: "Primary Agent",
-        isActive,
-        autoApply: true
-      }
-    })
-  }
-}
-
-export async function updatePortfolioUrl(url: string) {
-  const user = await requireAuth()
-
-  await prisma.profile.upsert({
-    where: { userId: user.id },
-    update: { website: url },
-    create: {
-      userId: user.id,
-      website: url,
-    }
-  })
-}
-
+import { NextResponse } from "next"
 import { anthropic } from "@ai-sdk/anthropic"
 import { generateText } from "ai"
 import { Resend } from "resend"
 
+export const maxDuration = 60 // Allow 60s for agent processing
+
+// Use placeholder or actual env key
 const resend = new Resend(process.env.RESEND_API_KEY || "re_123456789_placeholder")
 
-export async function forceRunJobWorker() {
-  const user = await requireAuth()
-  
+export async function POST(req: Request) {
   try {
+    const user = await requireAuth()
+
     const automation = await prisma.automation.findFirst({
       where: { userId: user.id, isActive: true }
     })
 
     if (!automation) {
-      return false
+      return NextResponse.json({ error: "No active automation found." }, { status: 400 })
     }
 
     // --- STEP 1: Log initialization ---
@@ -78,12 +42,13 @@ export async function forceRunJobWorker() {
       }
     })
 
-    // Mock jobs for spectacular demo
+    // For demo purposes, we will mock finding a job, but make it look spectacular
     const mockJobs = [
       { company: "Vercel", role: "Senior Frontend Engineer", url: "https://vercel.com/careers" },
       { company: "Stripe", role: "Staff React Engineer", url: "https://stripe.com/jobs" },
       { company: "Linear", role: "Product Engineer", url: "https://linear.app/careers" },
-      { company: "Anthropic", role: "Full Stack Developer", url: "https://anthropic.com/careers" }
+      { company: "Anthropic", role: "Full Stack Developer", url: "https://anthropic.com/careers" },
+      { company: "OpenAI", role: "Software Engineer", url: "https://openai.com/careers" }
     ]
     const matchedJob = mockJobs[Math.floor(Math.random() * mockJobs.length)]
 
@@ -96,7 +61,7 @@ export async function forceRunJobWorker() {
       }
     })
 
-    // --- STEP 3: AI Cover Letter ---
+    // --- STEP 3: AI Cover Letter Generation ---
     await prisma.auditLog.create({
       data: {
         actorId: user.id,
@@ -121,7 +86,7 @@ export async function forceRunJobWorker() {
       }
     })
 
-    await prisma.job.create({
+    const newJob = await prisma.job.create({
       data: {
         userId: user.id,
         company: matchedJob.company,
@@ -182,26 +147,9 @@ export async function forceRunJobWorker() {
       }
     })
 
-    return true
-  } catch (error) {
-    console.error("Failed to trigger job worker", error)
-    return false
+    return NextResponse.json({ success: true, job: newJob })
+  } catch (error: any) {
+    console.error("Automation error:", error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
-}
-
-export async function getAgentLogs() {
-  const user = await requireAuth()
-  
-  const logs = await prisma.auditLog.findMany({
-    where: { actorId: user.id, entity: { in: ["Agent Run", "Agent Task"] } },
-    orderBy: { createdAt: 'desc' },
-    take: 50
-  })
-  
-  return logs.map(log => ({
-    id: log.id,
-    action: log.action,
-    message: (log.metadata as any)?.message || "Action performed",
-    createdAt: log.createdAt
-  }))
 }
