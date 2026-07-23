@@ -43,7 +43,8 @@ export function ChatInterface({
     if (!scrollContainerRef.current) return
     const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current
     const distanceFromBottom = scrollHeight - scrollTop - clientHeight
-    setIsAtBottom(distanceFromBottom < 100)
+    // Increase tolerance to 300px so fast streaming doesn't break auto-scroll
+    setIsAtBottom(distanceFromBottom < 300)
   }, [])
 
   // Auto-scroll to bottom only if already at bottom
@@ -51,13 +52,18 @@ export function ChatInterface({
     if (isAtBottom && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "auto" })
     }
-  }, [messages, isAtBottom])
+  }, [messages]) // Removed isAtBottom from deps to prevent re-triggering loops
 
   // Custom submit handler to prevent empty submissions
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!input.trim()) return
     setIsAtBottom(true) // Force scroll to bottom on new message send
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+      }
+    }, 50)
     handleSubmit(e)
   }
 
