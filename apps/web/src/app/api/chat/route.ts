@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@repo/db"
 import { anthropic } from "@ai-sdk/anthropic"
-import { streamText, convertToCoreMessages } from "ai"
+import { streamText } from "ai"
 import { NextResponse } from "next"
 
 export const maxDuration = 60 // Allow up to 60 seconds for AI response
@@ -77,11 +77,17 @@ Always format your code beautifully using Markdown code blocks. Include comments
 When designing UI, prefer Tailwind CSS classes.
 Be concise, brilliant, and extremely helpful.`
 
+    // Map to strictly CoreMessage shape
+    const coreMessages = messages.map((m: any) => ({
+      role: m.role as "user" | "assistant" | "system",
+      content: m.content
+    }))
+
     // Start streaming from Anthropic
     const result = streamText({
       model: anthropic("claude-3-5-sonnet-latest"),
       system: systemPrompt,
-      messages: convertToCoreMessages(messages),
+      messages: coreMessages,
       onFinish: async ({ text }) => {
         // Save the assistant's response to the DB when the stream finishes
         try {

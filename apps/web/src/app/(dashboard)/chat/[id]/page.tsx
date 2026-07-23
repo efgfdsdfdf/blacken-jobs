@@ -1,7 +1,12 @@
 import { requireAuth } from "@/dal/auth"
-import { ChatInterface } from "@/features/chat/components/chat-interface"
 import { prisma } from "@repo/db"
 import { notFound } from "next/navigation"
+import dynamic from "next/dynamic"
+
+const ChatInterface = dynamic(
+  () => import("@/features/chat/components/chat-interface").then((mod) => mod.ChatInterface),
+  { ssr: false }
+)
 
 export default async function ActiveChatPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireAuth()
