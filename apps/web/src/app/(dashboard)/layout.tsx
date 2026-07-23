@@ -27,11 +27,11 @@ export default async function DashboardLayout({
         <Sidebar user={profile} />
       </div>
       
-      <div className="flex flex-1 flex-col overflow-hidden relative z-10 glass-panel border-l border-white/5 rounded-l-2xl m-2 mr-0 shadow-2xl">
+      <div className="flex flex-1 flex-col overflow-hidden relative z-10 glass-panel border-white/5 rounded-none md:rounded-l-2xl m-0 md:m-2 md:mr-0 md:border-l shadow-2xl">
         <div className="bg-background/40 backdrop-blur-md border-b border-white/5">
           <Header user={profile} />
         </div>
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-0 md:p-6 lg:p-8">
           {children}
         </main>
       </div>

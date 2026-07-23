@@ -122,7 +122,7 @@ export function MessageBubble({ message }: { message: MessageProps }) {
         {isUser ? <User className="h-5 w-5 text-zinc-300" /> : <Bot className="h-5 w-5 text-primary" />}
       </div>
       
-      <div className={`flex flex-col max-w-[85%] ${isUser ? "items-end" : "items-start"}`}>
+      <div className={`flex flex-col max-w-[95%] md:max-w-[85%] ${isUser ? "items-end" : "items-start"}`}>
         <div className="flex items-center gap-2 mb-1.5 px-1">
           <span className="text-sm font-semibold tracking-tight text-zinc-300">
             {isUser ? "You" : "BLACK AI"}
@@ -130,7 +130,7 @@ export function MessageBubble({ message }: { message: MessageProps }) {
         </div>
         
         <div 
-          className={`relative rounded-2xl px-5 py-4 text-[15px] leading-relaxed shadow-xl break-words w-full
+          className={`relative rounded-2xl px-4 md:px-5 py-3 md:py-4 text-[15px] leading-relaxed shadow-xl break-words w-full
             ${isUser 
               ? "bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-100 border border-white/10" 
               : "glass-card text-zinc-200 border border-white/5"

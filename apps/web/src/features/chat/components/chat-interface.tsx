@@ -134,7 +134,7 @@ export function ChatInterface({
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 md:px-8 pt-8 pb-4"
+        className="flex-1 overflow-y-auto px-2 md:px-8 pt-4 md:pt-8 pb-4"
       >
         {!hasMessages ? (
           <div className="flex min-h-[70vh] flex-col items-center justify-center space-y-10 animate-fade-in px-4">
@@ -187,7 +187,7 @@ export function ChatInterface({
 
       {/* Input Area - Fixed at bottom ONLY when there are messages */}
       {hasMessages && (
-        <div className="absolute bottom-6 left-0 right-0 px-4 md:px-8 bg-gradient-to-t from-background via-background/90 to-transparent pt-6 pb-2">
+        <div className="absolute bottom-2 md:bottom-6 left-0 right-0 px-2 md:px-8 bg-gradient-to-t from-background via-background/90 to-transparent pt-6 pb-2">
           <InputForm />
         </div>
       )}
