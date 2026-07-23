@@ -104,7 +104,7 @@ Be concise, brilliant, and extremely helpful.`
       }
     })
 
-    return result.toUIMessageStreamResponse({
+    return result.toTextStreamResponse({
       headers: {
         "x-chat-id": activeChatId
       }
