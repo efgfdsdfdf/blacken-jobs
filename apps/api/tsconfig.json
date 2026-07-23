@@ -4,6 +4,9 @@
     "rootDir": "src",
     "outDir": "dist",
     "baseUrl": ".",
+    "declaration": false,
+    "declarationMap": false,
+    "strict": false,
     "paths": {
       "@/*": ["src/*"]
     }
