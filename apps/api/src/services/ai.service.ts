@@ -19,7 +19,7 @@ export class AIService {
    */
   async streamChat(messages: Anthropic.MessageParam[], systemPrompt?: string) {
     if (!this.anthropic) {
-      throw new AppError(500, "Anthropic API key is not configured");
+      throw new AppError("Anthropic API key is not configured", 500);
     }
 
     try {
@@ -33,7 +33,7 @@ export class AIService {
 
       return stream;
     } catch (error: any) {
-      throw new AppError(500, `Failed to communicate with AI: ${error.message}`);
+      throw new AppError(`Failed to communicate with AI: ${error.message}`, 500);
     }
   }
 

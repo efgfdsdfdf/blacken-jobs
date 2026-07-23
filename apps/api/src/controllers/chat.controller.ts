@@ -1,4 +1,5 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
+import { AuthenticatedRequest as Request } from "../middlewares/auth.middleware";
 import { prisma } from "@repo/db";
 import { aiService } from "../services/ai.service";
 import { AppError } from "../utils/errors";
@@ -45,7 +46,7 @@ export class ChatController {
   // Get single chat and its messages
   async getChat(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const user = req.user;
       if (!user) throw new AppError("Unauthorized", 401);
 
@@ -71,7 +72,7 @@ export class ChatController {
   // Send a message to a chat and stream response via SSE
   async sendMessage(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id: chatId } = req.params;
+      const chatId = req.params.id as string;
       const { content } = req.body;
       const user = req.user;
 
