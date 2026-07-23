@@ -67,7 +67,7 @@ export class UserRepository implements IUserRepository {
     return prisma.profile.upsert({
       where: { userId },
       update: data,
-      create: { ...data, userId } as Prisma.ProfileCreateInput,
+      create: { ...data, userId } as any,
     });
   }
 
@@ -75,7 +75,7 @@ export class UserRepository implements IUserRepository {
     return prisma.userSettings.upsert({
       where: { userId },
       update: data,
-      create: { ...data, userId } as Prisma.UserSettingsCreateInput,
+      create: { ...data, userId } as any,
     });
   }
 

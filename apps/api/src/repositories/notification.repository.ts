@@ -46,7 +46,7 @@ export class NotificationRepository implements INotificationRepository {
 
   async create(data: CreateNotificationInput) {
     return prisma.notification.create({
-      data,
+      data: data as any,
     });
   }
 

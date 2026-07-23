@@ -25,7 +25,7 @@ export interface IAuditRepository {
 export class AuditRepository implements IAuditRepository {
   async create(data: CreateAuditLogInput) {
     return prisma.auditLog.create({
-      data,
+      data: data as any,
     });
   }
 
