@@ -73,8 +73,8 @@ function CodeBlock({ node, inline, className, children, ...props }: any) {
   }
 
   return (
-    <div className="relative rounded-md my-4 border border-zinc-800 bg-zinc-950 font-mono text-sm overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-1.5 bg-zinc-900 border-b border-zinc-800 text-zinc-400 text-xs">
+    <div className="relative rounded-2xl my-4 border border-white/10 bg-zinc-950 font-mono text-sm overflow-hidden shadow-2xl">
+      <div className="flex items-center justify-between px-4 py-2 bg-zinc-900/50 border-b border-white/10 text-zinc-400 text-xs">
         <span>{language}</span>
       </div>
       <div className="p-4 overflow-x-auto">
@@ -92,32 +92,43 @@ export function MessageBubble({ message }: { message: MessageProps }) {
   if (message.role === "SYSTEM") return null
 
   return (
-    <div className={cn(
-      "flex w-full gap-4 px-4 py-6 md:px-6 lg:px-8",
-      isUser ? "bg-background" : "bg-muted/30 border-y"
-    )}>
-      <div className={cn(
-        "flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-md border shadow-sm",
-        isUser 
-          ? "bg-primary text-primary-foreground border-primary" 
-          : "bg-card text-foreground border-border"
-      )}>
-        {isUser ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
+    <div className={`flex w-full gap-4 ${isUser ? "flex-row-reverse" : "flex-row"} animate-slide-in-up`}>
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-lg
+        ${isUser 
+          ? "bg-gradient-to-br from-zinc-700 to-zinc-900 border border-white/10" 
+          : "bg-primary/20 border border-primary/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+        }`}
+      >
+        {isUser ? <User className="h-5 w-5 text-zinc-300" /> : <Bot className="h-5 w-5 text-primary" />}
       </div>
       
-      <div className="flex-1 space-y-2 overflow-hidden px-1">
-        <div className="prose prose-sm md:prose-base prose-neutral dark:prose-invert max-w-none break-words">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[[rehypeHighlight, { detect: true }]]}
-            components={{ 
-              code: CodeBlock,
-              p: ({ children }) => <div className="mb-4 last:mb-0">{children}</div>,
-              pre: ({ children }) => <>{children}</>
-            }}
-          >
-            {message.content}
-          </ReactMarkdown>
+      <div className={`flex flex-col max-w-[85%] ${isUser ? "items-end" : "items-start"}`}>
+        <div className="flex items-center gap-2 mb-1.5 px-1">
+          <span className="text-sm font-semibold tracking-tight text-zinc-300">
+            {isUser ? "You" : "BLACK AI"}
+          </span>
+        </div>
+        
+        <div 
+          className={`relative rounded-2xl px-5 py-4 text-[15px] leading-relaxed shadow-xl break-words w-full
+            ${isUser 
+              ? "bg-gradient-to-b from-zinc-800 to-zinc-900 text-zinc-100 border border-white/10" 
+              : "glass-card text-zinc-200 border border-white/5"
+            }`}
+        >
+          <div className="prose prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent prose-code:text-primary-foreground prose-a:text-primary hover:prose-a:text-primary/80 prose-strong:text-zinc-100">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[[rehypeHighlight, { detect: true }]]}
+              components={{ 
+                code: CodeBlock,
+                p: ({ children }) => <div className="mb-4 last:mb-0">{children}</div>,
+                pre: ({ children }) => <>{children}</>
+              }}
+            >
+              {message.content}
+            </ReactMarkdown>
+          </div>
         </div>
       </div>
     </div>
