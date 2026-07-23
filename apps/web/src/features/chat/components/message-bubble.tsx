@@ -4,7 +4,7 @@ import * as React from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeHighlight from "rehype-highlight"
-import { User, Bot, Eye, Code2 } from "lucide-react"
+import { User, Bot, Eye, Code2, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -12,6 +12,8 @@ export interface MessageProps {
   role: "USER" | "ASSISTANT" | "SYSTEM"
   content: string
 }
+
+import { ProjectDownloadCard } from "./project-download-card"
 
 function extractText(node: any): string {
   if (!node) return ''
@@ -21,7 +23,7 @@ function extractText(node: any): string {
 }
 
 function CodeBlock({ node, inline, className, children, ...props }: any) {
-  const match = /language-(\w+)/.exec(className || '')
+  const match = /language-([a-zA-Z0-9_]+)/.exec(className || '')
   const language = match?.[1] || 'code'
   
   if (inline) {
@@ -33,6 +35,24 @@ function CodeBlock({ node, inline, className, children, ...props }: any) {
   }
 
   const codeString = extractText(node).replace(/\n$/, '')
+  
+  if (language === 'project_files') {
+    try {
+      // It might be streaming in, so JSON.parse can fail until it's fully streamed
+      const files = JSON.parse(codeString)
+      if (Array.isArray(files)) {
+        return <ProjectDownloadCard files={files} />
+      }
+    } catch (e) {
+      return (
+        <div className="my-4 p-4 border border-primary/20 bg-primary/5 rounded-xl flex items-center gap-3 text-sm text-zinc-300">
+          <Loader2 className="animate-spin h-5 w-5 text-primary" /> 
+          <span>Assembling project files...</span>
+        </div>
+      )
+    }
+  }
+
   const isHtml = language.toLowerCase() === 'html'
 
   if (isHtml) {
