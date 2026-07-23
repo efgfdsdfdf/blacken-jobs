@@ -1,0 +1,294 @@
+// =============================================================================
+// BLACK AI — Prisma Schema
+// =============================================================================
+// Production-grade database schema for the BLACK AI platform.
+// Models: User, Profile, UserSettings, Notification, AuditLog
+// =============================================================================
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -----------------------------------------------------------------------------
+// Enums
+// -----------------------------------------------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+  OWNER
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  PASSWORD_CHANGE
+  SETTINGS_UPDATE
+  PROFILE_UPDATE
+  ACCOUNT_DELETE
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  SYSTEM
+}
+
+// -----------------------------------------------------------------------------
+// User — Core identity model linked to Supabase Auth
+// -----------------------------------------------------------------------------
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  supabaseId      String    @unique
+  role            Role      @default(USER)
+  isEmailVerified Boolean   @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  profile       Profile?
+  settings      UserSettings?
+  notifications Notification[]
+  chats         Chat[]
+  jobs          Job[]
+  automations   Automation[]
+  resumes       Resume[]
+  auditLogs     AuditLog[]     @relation("UserAuditLogs")
+  performedLogs AuditLog[]     @relation("ActorAuditLogs")
+
+  @@index([email])
+  @@index([supabaseId])
+  @@map("users")
+}
+
+// -----------------------------------------------------------------------------
+// Profile — Extended user information
+// -----------------------------------------------------------------------------
+
+model Profile {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  firstName   String?
+  lastName    String?
+  displayName String?
+  avatarUrl   String?
+  bio         String?
+  phoneNumber String?
+  location    String?
+  website     String?
+  company     String?
+  jobTitle    String?
+  githubUrl   String?
+  linkedinUrl String?
+  twitterUrl  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+// -----------------------------------------------------------------------------
+// UserSettings — User preferences and configuration
+// -----------------------------------------------------------------------------
+
+model UserSettings {
+  id                 String  @id @default(uuid())
+  userId             String  @unique
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  theme              String  @default("dark")
+  emailNotifications Boolean @default(true)
+  pushNotifications  Boolean @default(false)
+  twoFactorEnabled   Boolean @default(false)
+  timezone           String  @default("UTC")
+  language           String  @default("en")
+  dateFormat         String  @default("YYYY-MM-DD")
+
+  updatedAt DateTime @updatedAt
+
+  @@map("user_settings")
+}
+
+// -----------------------------------------------------------------------------
+// Notification — User notifications
+// -----------------------------------------------------------------------------
+
+model Notification {
+  id     String           @id @default(uuid())
+  userId String
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title   String
+  message String
+  type    NotificationType @default(INFO)
+  isRead  Boolean          @default(false)
+  readAt  DateTime?
+  link    String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// -----------------------------------------------------------------------------
+// AuditLog — Security and compliance audit trail
+// -----------------------------------------------------------------------------
+
+model AuditLog {
+  id String @id @default(uuid())
+
+  targetUserId String?
+  targetUser   User?   @relation("UserAuditLogs", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  actorId String?
+  actor   User?   @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
+
+  action   AuditAction
+  entity   String
+  entityId String?
+  metadata Json?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([targetUserId])
+  @@index([actorId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// -----------------------------------------------------------------------------
+// Chat & AI Integration
+// -----------------------------------------------------------------------------
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+model Chat {
+  id        String   @id @default(uuid())
+  title     String   @default("New Chat")
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  messages  Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([updatedAt])
+  @@map("chats")
+}
+
+model Message {
+  id        String      @id @default(uuid())
+  
+  chatId    String
+  chat      Chat        @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  role      MessageRole
+  content   String      @db.Text
+
+  createdAt DateTime    @default(now())
+
+  @@index([chatId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+// -----------------------------------------------------------------------------
+// Autonomous Job Application System
+// -----------------------------------------------------------------------------
+
+enum JobStatus {
+  FOUND
+  APPLIED
+  REJECTED
+  INTERVIEWING
+  OFFER
+}
+
+model Job {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  company     String
+  role        String
+  url         String?
+  description String?   @db.Text
+  status      JobStatus @default(FOUND)
+  
+  matchScore  Int?
+  coverLetter String?   @db.Text
+  
+  appliedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@map("jobs")
+}
+
+model Automation {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name        String
+  keywords    String[]  
+  locations   String[]
+  
+  isActive    Boolean   @default(false)
+  autoApply   Boolean   @default(false)
+  
+  lastRunAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("automations")
+}
+
+model Resume {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title       String
+  content     String    @db.Text
+  isDefault   Boolean   @default(false)
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("resumes")
+}

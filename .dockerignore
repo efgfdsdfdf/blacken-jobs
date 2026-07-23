@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+*.md
+.env*
+.gitignore
+.turbo
+coverage
+.nyc_output
+logs
+*.log
+dist
+.cache
+docker-compose*.yml
