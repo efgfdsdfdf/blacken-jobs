@@ -10,6 +10,10 @@ export default async function ProfilePage() {
   const session = await getAuthenticatedUser()
   const user = await getUserProfile(session!.id)
 
+  if (!user) {
+    return <div>Profile not found</div>
+  }
+
   const joinDate = new Date(user.createdAt).toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric'
@@ -26,7 +30,7 @@ export default async function ProfilePage() {
               <Avatar className="h-32 w-32 border-4 border-card shadow-xl rounded-2xl bg-card">
                 <AvatarImage src="" />
                 <AvatarFallback className="text-4xl bg-primary/10 text-primary rounded-2xl">
-                  {user.firstName?.charAt(0) || "U"}
+                  {user.profile?.firstName?.charAt(0) || user.email.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="space-y-1 pb-2">
