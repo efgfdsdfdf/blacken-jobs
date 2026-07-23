@@ -100,10 +100,11 @@ Be concise, brilliant, and extremely helpful.`
 
     // Return the streaming response along with the chatId in custom headers
     // so the client knows the generated chatId if a new one was created.
-    const response = result.toDataStreamResponse()
-    response.headers.set("x-chat-id", activeChatId)
-    
-    return response
+    return result.toDataStreamResponse({
+      headers: {
+        "x-chat-id": activeChatId
+      }
+    })
 
   } catch (error) {
     console.error("Chat API error:", error)
