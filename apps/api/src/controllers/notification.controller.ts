@@ -44,7 +44,7 @@ export class NotificationController {
 
   markAsRead = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const notification = await this.notificationService.markAsRead(id, req.user.id);
       
       res.status(200).json({
@@ -71,7 +71,7 @@ export class NotificationController {
 
   deleteNotification = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       await this.notificationService.deleteNotification(id, req.user.id);
       
       res.status(200).json({
