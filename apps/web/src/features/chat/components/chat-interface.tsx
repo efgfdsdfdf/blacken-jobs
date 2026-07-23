@@ -27,6 +27,7 @@ export function ChatInterface({
     id: chatId === "new" ? undefined : chatId,
     // @ts-ignore
     initialMessages,
+    streamProtocol: "text",
     body: {
       chatId
     },
