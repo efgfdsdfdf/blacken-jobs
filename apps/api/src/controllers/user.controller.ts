@@ -29,7 +29,7 @@ export class UserController {
 
   getUserById = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       
       // Basic check: admin or self
       if (req.user.id !== id && req.user.role !== 'ADMIN') {
