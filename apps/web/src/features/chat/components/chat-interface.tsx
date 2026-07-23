@@ -5,6 +5,7 @@ import { Send, Loader2, AlertCircle, Bot, Paperclip } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useChat } from "@ai-sdk/react"
+import { toast } from "sonner"
 import { MessageBubble, type MessageProps } from "./message-bubble"
 
 export function ChatInterface({ 
@@ -14,7 +15,12 @@ export function ChatInterface({
   chatId: string
   initialMessages?: MessageProps[] 
 }) {
+  const [mounted, setMounted] = React.useState(false)
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
     api: "/api/chat",
@@ -50,6 +56,8 @@ export function ChatInterface({
       }
     }
   }
+
+  if (!mounted) return null
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] relative">
