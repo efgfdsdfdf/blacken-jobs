@@ -6,6 +6,7 @@
 
 import { requireAuth } from "@/dal/auth";
 import { getUserProfile, getUserNotifications } from "@/dal/user";
+import { prisma } from "@repo/db";
 import {
   Card,
   CardContent,
@@ -47,31 +48,38 @@ export default async function DashboardPage() {
   const firstName = profile?.profile?.firstName ?? "there";
   const greeting = getGreeting();
 
-  // Stat cards — these will connect to real data in later phases
+  const [projectCount, chatCount, jobCount, logsCount] = await Promise.all([
+    prisma.job.count({ where: { userId: session.id } }), // Assuming projects are jobs or we just use jobs
+    prisma.chat.count({ where: { userId: session.id } }),
+    prisma.job.count({ where: { userId: session.id, status: "APPLIED" } }),
+    prisma.auditLog.count({ where: { actorId: session.id } })
+  ]);
+
+  // Stat cards — connected to real data
   const stats = [
     {
-      name: "Total Projects",
-      value: "0",
+      name: "Total Jobs Found",
+      value: projectCount.toString(),
       icon: Code2,
-      trend: "Create your first project",
+      trend: "Live net scraping active",
     },
     {
       name: "AI Chats",
-      value: "0",
+      value: chatCount.toString(),
       icon: MessageSquare,
-      trend: "Start a conversation",
+      trend: "Conversations with BLACK AI",
     },
     {
-      name: "Tasks Complete",
-      value: "—",
+      name: "Agent Actions",
+      value: logsCount.toString(),
       icon: CheckCircle,
-      trend: "No tasks yet",
+      trend: "Total autonomous tasks",
     },
     {
-      name: "Job Applications",
-      value: "0",
+      name: "Jobs Applied",
+      value: jobCount.toString(),
       icon: Briefcase,
-      trend: "Set up job hunting",
+      trend: "Auto-submitted apps",
     },
   ];
 

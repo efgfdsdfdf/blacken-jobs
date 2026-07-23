@@ -59,15 +59,25 @@ export function AutomationClient({ initialIsActive, initialPortfolioUrl }: Props
   }
 
   const fetchLogs = async () => {
-    setIsLoadingLogs(true)
     try {
       const data = await getAgentLogs()
       setLogs(data)
     } catch (e) {
       toast.error("Failed to load logs")
     }
-    setIsLoadingLogs(false)
   }
+
+  // Poll for logs if the dialog is open
+  React.useEffect(() => {
+    if (!isLogsOpen) return
+    fetchLogs() // Initial fetch
+    
+    const interval = setInterval(() => {
+      fetchLogs()
+    }, 5000)
+    
+    return () => clearInterval(interval)
+  }, [isLogsOpen])
 
   const handleForceRun = async () => {
     toast.info("Triggering Agent...", { description: "The agent is waking up and scanning for jobs." });

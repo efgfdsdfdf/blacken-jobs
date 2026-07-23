@@ -3,6 +3,7 @@ import { getUserProfile } from "@/dal/user"
 import { redirect } from "next/navigation"
 import { Sidebar } from "@/components/common/sidebar"
 import { Header } from "@/components/common/header"
+import { AutoRefresher } from "@/components/common/auto-refresher"
 
 export default async function DashboardLayout({
   children,
@@ -19,6 +20,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background bg-grid-white/[0.02] relative">
+      <AutoRefresher intervalMs={15000} />
       {/* Subtle glowing ambient background */}
       <div className="absolute inset-0 hero-gradient pointer-events-none" />
       
