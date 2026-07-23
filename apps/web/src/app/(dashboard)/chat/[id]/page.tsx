@@ -7,6 +7,10 @@ export default async function ActiveChatPage({ params }: { params: Promise<{ id:
   const session = await requireAuth()
   const resolvedParams = await params
   
+  if (resolvedParams.id === "new") {
+    return <ChatInterface chatId="new" />
+  }
+  
   // Fetch initial history
   const chat = await prisma.chat.findUnique({
     where: { id: resolvedParams.id, userId: session.id },
@@ -28,5 +32,5 @@ export default async function ActiveChatPage({ params }: { params: Promise<{ id:
     content: msg.content
   }))
 
-  return <ChatInterface chatId={chat.id} initialMessages={initialMessages} />
+  return <ChatInterface key={chat.id} chatId={chat.id} initialMessages={initialMessages} />
 }
