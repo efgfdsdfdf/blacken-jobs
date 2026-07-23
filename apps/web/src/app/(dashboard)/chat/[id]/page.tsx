@@ -21,9 +21,10 @@ export default async function ActiveChatPage({ params }: { params: Promise<{ id:
     notFound()
   }
 
-  // Map to frontend message format
+  // Map to frontend message format for Vercel AI SDK
   const initialMessages = chat.messages.map(msg => ({
-    role: msg.role,
+    id: msg.id,
+    role: msg.role.toLowerCase() as "user" | "assistant" | "system",
     content: msg.content
   }))
 
