@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const { data: { user }, error } = await supabase.auth.getUser()
 
     if (error || !user) {
-      return new NextResponse("Unauthorized", { status: 401 })
+      return new Response("Unauthorized", { status: 401 })
     }
 
     // Get the user ID from Prisma
@@ -123,6 +123,6 @@ Be concise, brilliant, and extremely helpful.`
 
   } catch (error: any) {
     console.error("Chat API error:", error)
-    return new NextResponse(`Internal Server Error: ${error.message || error}`, { status: 500 })
+    return new Response(`Internal Server Error: ${error.message || error}`, { status: 500 })
   }
 }
