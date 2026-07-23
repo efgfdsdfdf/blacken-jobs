@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@repo/db"
 import { anthropic } from "@ai-sdk/anthropic"
-import { streamText } from "ai"
+import { streamText, convertToCoreMessages } from "ai"
 import { NextResponse } from "next"
 
 export const maxDuration = 60 // Allow up to 60 seconds for AI response
@@ -81,7 +81,7 @@ Be concise, brilliant, and extremely helpful.`
     const result = streamText({
       model: anthropic("claude-3-5-sonnet-latest"),
       system: systemPrompt,
-      messages,
+      messages: convertToCoreMessages(messages),
       onFinish: async ({ text }) => {
         // Save the assistant's response to the DB when the stream finishes
         try {
