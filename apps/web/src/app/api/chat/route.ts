@@ -85,7 +85,7 @@ Be concise, brilliant, and extremely helpful.`
 
     // Start streaming from Anthropic
     const result = streamText({
-      model: anthropic("claude-3-5-sonnet-20241022"),
+      model: anthropic("claude-sonnet-4-5-20250929"),
       system: systemPrompt,
       messages: coreMessages,
       onFinish: async ({ text }) => {

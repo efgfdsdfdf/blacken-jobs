@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     })
 
     const { text: coverLetter } = await generateText({
-      model: anthropic("claude-3-5-sonnet-20241022"),
+      model: anthropic("claude-sonnet-4-5-20250929"),
       prompt: `Write a short, punchy 3-sentence cover letter for a ${matchedJob.role} position at ${matchedJob.company}. The tone should be highly professional but modern. Start with "Hi Team,". No placeholders.`
     })
 
