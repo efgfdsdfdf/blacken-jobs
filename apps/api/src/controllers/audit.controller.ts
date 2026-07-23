@@ -26,7 +26,7 @@ export class AuditController {
 
   getUserLogs = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const { userId } = req.params;
+      const userId = req.params.userId as string;
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = parseInt(req.query.pageSize as string) || 20;
 
