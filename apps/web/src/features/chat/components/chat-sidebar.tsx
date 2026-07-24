@@ -105,12 +105,12 @@ export function ChatSidebar({ className, onChatSelect }: { className?: string; o
               <div
                 key={chat.id}
                 className={cn(
-                  "group flex items-center gap-2 rounded-lg pl-3 pr-1 py-1 text-sm transition-colors hover:bg-accent",
+                  "group flex items-center gap-2 rounded-lg pl-3 pr-1 py-1 text-sm transition-colors hover:bg-accent w-full overflow-hidden",
                   params.id === chat.id ? "bg-accent font-medium text-accent-foreground" : "text-muted-foreground"
                 )}
               >
                 <MessageSquare className="h-4 w-4 shrink-0" />
-                <Link onClick={() => onChatSelect?.()} href={`/chat/${chat.id}`} className="flex-1 truncate outline-none py-1">
+                <Link onClick={() => onChatSelect?.()} href={`/chat/${chat.id}`} className="flex-1 min-w-0 truncate outline-none py-1">
                   {chat.title}
                 </Link>
                 <DropdownMenu>
