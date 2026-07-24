@@ -53,10 +53,25 @@ function CodeBlock({ node, inline, className, children, isLoading, ...props }: a
       </div>
     )
 
+    const parseFilesFromXML = (text: string) => {
+      const files: any[] = []
+      const regex = /<file path="([^"]+)">([\s\S]*?)<\/file>/g
+      let match
+      while ((match = regex.exec(text)) !== null) {
+        files.push({
+          path: match[1],
+          content: match[2].trim()
+        })
+      }
+      return files
+    }
+
     try {
-      // Try to parse the JSON (will fail if stream is incomplete)
-      const files = JSON.parse(codeString)
-      if (Array.isArray(files)) {
+      // Try to parse the XML files
+      const files = parseFilesFromXML(codeString)
+      
+      // If we found complete files
+      if (files.length > 0 && !isLoading) {
         if (showCode) return renderRawCode()
         
         return (
@@ -70,26 +85,19 @@ function CodeBlock({ node, inline, className, children, isLoading, ...props }: a
             </button>
           </div>
         )
+      } else if (files.length > 0 && isLoading) {
+         // Streaming but we have SOME files parsed
+         if (showCode) return renderRawCode()
+         // Fallthrough to the loader below
+      } else if (files.length === 0 && !isLoading) {
+        // Finished loading but found ZERO files = failed to generate
+        throw new Error("No files found")
       }
     } catch (e) {
-      // JSON is currently streaming or malformed
+      // Stream is incomplete or no files found
       if (showCode) return renderRawCode()
 
-      // If we are no longer loading but JSON parse still failed, show fallback or attempt repair
       if (!isLoading) {
-        try {
-          // Attempt repair: simple closing bracket append
-          const repaired = JSON.parse(codeString + ']')
-          if (Array.isArray(repaired)) {
-            return (
-              <div className="animate-fade-in relative">
-                <ProjectDownloadCard files={repaired} />
-                <button onClick={() => setShowCode(true)} className="absolute top-3 right-3 text-xs bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 border border-white/10 px-2 py-1 rounded transition-colors">View Source</button>
-              </div>
-            )
-          }
-        } catch (repairError) {}
-        
         return (
           <div className="my-4 overflow-hidden rounded-xl border border-destructive/20 bg-destructive/10 backdrop-blur-sm p-4 text-destructive flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-medium">

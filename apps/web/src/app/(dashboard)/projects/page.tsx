@@ -25,12 +25,29 @@ export default async function ProjectsPage() {
     for (let i = chat.messages.length - 1; i >= 0; i--) {
       const msg = chat.messages[i]
       if (msg.role === "ASSISTANT" && msg.content.includes("```project_files")) {
-        try {
-          const match = msg.content.match(/```project_files\n([\s\S]*?)\n```/)
-          if (match && match[1]) {
-            projectFiles = JSON.parse(match[1])
+        const match = msg.content.match(/```project_files\n([\s\S]*?)\n```/)
+        if (match && match[1]) {
+          const files: any[] = []
+          const regex = /<file path="([^"]+)">([\s\S]*?)<\/file>/g
+          let fileMatch
+          while ((fileMatch = regex.exec(match[1])) !== null) {
+            files.push({
+              path: fileMatch[1],
+              content: fileMatch[2].trim()
+            })
           }
-        } catch(e) {}
+          if (files.length > 0) {
+            projectFiles = files
+          } else {
+             // Fallback for older chats that still used JSON format
+             try {
+                const parsed = JSON.parse(match[1])
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                   projectFiles = parsed
+                }
+             } catch(e) {}
+          }
+        }
         break
       }
     }

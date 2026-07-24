@@ -77,19 +77,25 @@ CRITICAL: You MUST be extremely proactive. If the user just says "hello" or prov
 
 CRITICAL ARCHITECTURAL REQUIREMENT:
 When the user asks you to build or write code for a project, you MUST NOT output standard markdown code blocks (e.g. \`\`\`tsx).
-Instead, you MUST package all the code and files into a single, specialized JSON payload inside a \`\`\`project_files\`\`\` block. 
-Format it EXACTLY like this:
+Instead, you MUST package all the code and files into a single specialized block using \`\`\`project_files\`\`\`. 
+Inside the block, use XML-like tags for each file. Format it EXACTLY like this:
 \`\`\`project_files
-[
-  { "path": "src/index.js", "content": "console.log('hello');" },
-  { "path": "package.json", "content": "{ \\"name\\": \\"app\\" }" }
-]
+<file path="src/index.js">
+console.log("hello world");
+</file>
+<file path="package.json">
+{
+  "name": "app",
+  "version": "1.0.0"
+}
+</file>
 \`\`\`
-CRITICAL JSON RULES:
-1. The payload MUST be 100% valid, strict JSON.
-2. You CANNOT use literal newlines inside the "content" string. You MUST use the escaped newline character (\\n).
-3. You MUST escape all double quotes inside the "content" string (\\").
-4. If you fail to properly escape newlines or quotes, the application will crash.
+
+CRITICAL RULES:
+1. You MUST wrap every single file's content in a <file path="[FILE_PATH]"> tag.
+2. You MUST close every file with a </file> tag.
+3. You can output raw code with literal newlines and quotes inside the tags. You DO NOT need to escape anything.
+4. Do NOT use JSON formatting for the project_files block.
 
 Outside of this block, explain the specs, what they should expect in the downloaded ZIP, and setup instructions. Do not show the code outside the \`\`\`project_files\`\`\` block.
 Be concise, brilliant, and extremely helpful.`
