@@ -36,18 +36,68 @@ function CodeBlock({ node, inline, className, children, ...props }: any) {
 
   const codeString = extractText(node).replace(/\n$/, '')
   
+  const [showCode, setShowCode] = React.useState(false)
+
   if (language === 'project_files') {
+    const renderRawCode = () => (
+      <div className="relative rounded-2xl my-4 border border-white/10 bg-zinc-950 font-mono text-sm overflow-hidden shadow-2xl animate-fade-in">
+        <div className="flex items-center justify-between px-4 py-2 bg-zinc-900/50 border-b border-white/10">
+          <span className="text-zinc-400 text-xs">JSON Payload (Streaming)</span>
+          <button onClick={() => setShowCode(false)} className="text-xs text-primary hover:text-primary/80 transition-colors">Hide Code</button>
+        </div>
+        <div className="p-4 overflow-x-auto">
+          <code className={className} {...props}>
+            {children}
+          </code>
+        </div>
+      </div>
+    )
+
     try {
-      // It might be streaming in, so JSON.parse can fail until it's fully streamed
+      // Try to parse the JSON (will fail if stream is incomplete)
       const files = JSON.parse(codeString)
       if (Array.isArray(files)) {
-        return <ProjectDownloadCard files={files} />
+        if (showCode) return renderRawCode()
+        
+        return (
+          <div className="animate-fade-in relative">
+            <ProjectDownloadCard files={files} />
+            <button 
+              onClick={() => setShowCode(true)} 
+              className="absolute top-3 right-3 text-xs bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 border border-white/10 px-2 py-1 rounded transition-colors"
+            >
+              View Source
+            </button>
+          </div>
+        )
       }
     } catch (e) {
+      // JSON is currently streaming or malformed
+      if (showCode) return renderRawCode()
+
+      // Calculate a rough progress based on length (since we don't know total)
+      const roughSize = (codeString.length / 1024).toFixed(1)
+      
       return (
-        <div className="my-4 p-4 border border-primary/20 bg-primary/5 rounded-xl flex items-center gap-3 text-sm text-zinc-300">
-          <Loader2 className="animate-spin h-5 w-5 text-primary" /> 
-          <span>Assembling project files...</span>
+        <div className="my-4 overflow-hidden rounded-xl border border-white/10 bg-zinc-900/50 backdrop-blur-sm animate-fade-in">
+          <div className="border-b border-white/5 bg-zinc-800/50 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-medium text-primary animate-pulse">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>Building Project Files...</span>
+            </div>
+            <button 
+              onClick={() => setShowCode(true)} 
+              className="text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+            >
+              Show Code
+            </button>
+          </div>
+          <div className="p-5 flex flex-col items-center justify-center gap-3">
+            <div className="w-full bg-black/40 h-1.5 rounded-full overflow-hidden relative">
+               <div className="absolute top-0 left-0 h-full bg-primary/60 w-1/2 animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
+            </div>
+            <span className="text-xs text-zinc-500 font-mono">Receiving data: {roughSize} KB</span>
+          </div>
         </div>
       )
     }
