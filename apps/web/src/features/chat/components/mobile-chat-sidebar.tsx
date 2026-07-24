@@ -20,9 +20,7 @@ export function MobileChatSidebar() {
         </SheetTrigger>
         <SheetContent side="left" className="p-0 w-72 border-r-0 bg-zinc-950">
           <SheetTitle className="sr-only">Chat History</SheetTitle>
-          <div onClick={() => setOpen(false)} className="h-full">
-            <ChatSidebar className="w-full h-full flex border-0 bg-transparent" />
-          </div>
+          <ChatSidebar onChatSelect={() => setOpen(false)} className="w-full h-full flex border-0 bg-transparent" />
         </SheetContent>
       </Sheet>
     </div>

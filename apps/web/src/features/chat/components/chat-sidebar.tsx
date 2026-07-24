@@ -24,7 +24,7 @@ type ChatPreview = {
   updatedAt: string
 }
 
-export function ChatSidebar({ className }: { className?: string }) {
+export function ChatSidebar({ className, onChatSelect }: { className?: string; onChatSelect?: () => void }) {
   const params = useParams()
   const router = useRouter()
   const [chats, setChats] = React.useState<ChatPreview[]>([])
@@ -78,8 +78,14 @@ export function ChatSidebar({ className }: { className?: string }) {
   return (
     <div className={cn("flex w-64 flex-col bg-muted/30", className)}>
       <div className="p-4 border-b">
-        <Button onClick={handleNewChat} className="w-full justify-start shadow-md shadow-primary/20">
-          <Plus className="mr-2 h-4 w-4" />
+        <Button 
+          onClick={() => {
+            handleNewChat()
+            onChatSelect?.()
+          }} 
+          className="w-full justify-start gap-2 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary transition-colors border border-primary/20"
+        >
+          <Plus className="h-4 w-4" />
           New Chat
         </Button>
       </div>
@@ -99,12 +105,12 @@ export function ChatSidebar({ className }: { className?: string }) {
               <div
                 key={chat.id}
                 className={cn(
-                  "group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent",
+                  "group flex items-center gap-2 rounded-lg pl-3 pr-1 py-1 text-sm transition-colors hover:bg-accent",
                   params.id === chat.id ? "bg-accent font-medium text-accent-foreground" : "text-muted-foreground"
                 )}
               >
                 <MessageSquare className="h-4 w-4 shrink-0" />
-                <Link href={`/chat/${chat.id}`} className="flex-1 truncate outline-none mr-6">
+                <Link onClick={() => onChatSelect?.()} href={`/chat/${chat.id}`} className="flex-1 truncate outline-none py-1">
                   {chat.title}
                 </Link>
                 <DropdownMenu>
@@ -112,7 +118,7 @@ export function ChatSidebar({ className }: { className?: string }) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute right-1 h-7 w-7 opacity-100 transition-opacity bg-background/80 hover:bg-background shadow-sm"
+                      className="h-7 w-7 shrink-0 opacity-100 hover:bg-background/80"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                       <span className="sr-only">More options</span>
