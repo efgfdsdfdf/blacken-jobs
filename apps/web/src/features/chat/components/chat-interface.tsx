@@ -49,16 +49,24 @@ export function ChatInterface({
 
   // Auto-scroll to bottom only if already at bottom
   React.useEffect(() => {
-    if (isAtBottom && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+    if (isAtBottom && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: "smooth"
+      })
     }
   }, [messages])
 
   // Force scroll to bottom on initial entry
   React.useEffect(() => {
-    if (mounted && messages.length > 0) {
+    if (mounted && messages.length > 0 && scrollContainerRef.current) {
       const timer = setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTo({
+            top: scrollContainerRef.current.scrollHeight,
+            behavior: "smooth"
+          })
+        }
       }, 500)
       return () => clearTimeout(timer)
     }
@@ -70,8 +78,11 @@ export function ChatInterface({
     if (!input.trim()) return
     setIsAtBottom(true) // Force scroll to bottom on new message send
     setTimeout(() => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTo({
+          top: scrollContainerRef.current.scrollHeight,
+          behavior: "smooth"
+        })
       }
     }, 50)
     handleSubmit(e)

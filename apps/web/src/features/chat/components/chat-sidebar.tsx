@@ -60,6 +60,7 @@ export function ChatSidebar({ className, onChatSelect }: { className?: string; o
   }
 
   const handleDeleteChat = async (id: string, e: React.MouseEvent) => {
+    e.preventDefault()
     e.stopPropagation()
     try {
       const res = await fetch(`/api/chats/${id}`, { method: "DELETE" })
@@ -69,9 +70,12 @@ export function ChatSidebar({ className, onChatSelect }: { className?: string; o
         if (params.id === id) {
           router.push("/chat")
         }
+      } else {
+        const text = await res.text()
+        toast.error(`Failed to delete chat: ${text}`)
       }
-    } catch (err) {
-      toast.error("Failed to delete chat")
+    } catch (err: any) {
+      toast.error(`Error: ${err.message}`)
     }
   }
 
@@ -105,12 +109,12 @@ export function ChatSidebar({ className, onChatSelect }: { className?: string; o
               <div
                 key={chat.id}
                 className={cn(
-                  "group flex items-center gap-2 rounded-lg pl-3 pr-2 py-1 text-sm transition-colors hover:bg-accent w-full",
+                  "group grid grid-cols-[16px_1fr_28px] items-center gap-2 rounded-lg pl-3 pr-2 py-1 text-sm transition-colors hover:bg-accent w-full overflow-hidden",
                   params.id === chat.id ? "bg-accent font-medium text-accent-foreground" : "text-muted-foreground"
                 )}
               >
-                <MessageSquare className="h-4 w-4 shrink-0" />
-                <div className="flex-1 overflow-hidden">
+                <MessageSquare className="h-4 w-4" />
+                <div className="overflow-hidden">
                   <Link onClick={() => onChatSelect?.()} href={`/chat/${chat.id}`} className="block truncate outline-none py-1">
                     {chat.title}
                   </Link>
