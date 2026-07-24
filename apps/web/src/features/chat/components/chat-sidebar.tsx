@@ -113,27 +113,15 @@ export function ChatSidebar({ className, onChatSelect }: { className?: string; o
                 <Link onClick={() => onChatSelect?.()} href={`/chat/${chat.id}`} className="flex-1 min-w-0 truncate outline-none py-1">
                   {chat.title}
                 </Link>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-7 w-7 shrink-0 bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 border-zinc-700 z-50"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">More options</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem 
-                      onClick={(e) => handleDeleteChat(chat.id, e as any)} 
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => handleDeleteChat(chat.id, e as any)}
+                  className="h-7 w-7 shrink-0 opacity-100 bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-400 z-50 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Delete Chat</span>
+                </Button>
               </div>
             ))
           )}
