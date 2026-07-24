@@ -85,6 +85,12 @@ Format it EXACTLY like this:
   { "path": "package.json", "content": "{ \\"name\\": \\"app\\" }" }
 ]
 \`\`\`
+CRITICAL JSON RULES:
+1. The payload MUST be 100% valid, strict JSON.
+2. You CANNOT use literal newlines inside the "content" string. You MUST use the escaped newline character (\\n).
+3. You MUST escape all double quotes inside the "content" string (\\").
+4. If you fail to properly escape newlines or quotes, the application will crash.
+
 Outside of this block, explain the specs, what they should expect in the downloaded ZIP, and setup instructions. Do not show the code outside the \`\`\`project_files\`\`\` block.
 Be concise, brilliant, and extremely helpful.`
 
