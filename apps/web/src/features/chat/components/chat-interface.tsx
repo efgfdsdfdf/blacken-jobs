@@ -52,7 +52,17 @@ export function ChatInterface({
     if (isAtBottom && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "auto" })
     }
-  }, [messages]) // Removed isAtBottom from deps to prevent re-triggering loops
+  }, [messages])
+
+  // Force scroll to bottom on initial entry
+  React.useEffect(() => {
+    if (messages.length > 0) {
+      const timer = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto" })
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [chatId])
 
   // Custom submit handler to prevent empty submissions
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {

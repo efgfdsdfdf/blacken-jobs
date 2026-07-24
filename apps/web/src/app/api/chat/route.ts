@@ -109,6 +109,25 @@ Be concise, brilliant, and extremely helpful.`
               content: text
             }
           })
+          
+          // Generate a smart topic title in the background if this is the first turn
+          if (messages.length === 1) {
+            import("ai").then(async ({ generateText }) => {
+              try {
+                const { text: topicTitle } = await generateText({
+                  model: anthropic("claude-3-5-haiku-20241022"),
+                  prompt: `Based on this initial request and response, generate a concise 2-5 word topic title for this chat. Do not use quotes, punctuation, or prefixes like "Title:". Just output the title.\nUser: ${messages[0].content}\nAssistant: ${text.substring(0, 500)}`
+                })
+                
+                await prisma.chat.update({
+                  where: { id: activeChatId },
+                  data: { title: topicTitle.trim() }
+                })
+              } catch(e) {
+                console.error("Failed to generate title", e)
+              }
+            })
+          }
         } catch (dbError) {
           console.error("Failed to save AI response to DB:", dbError)
         }
