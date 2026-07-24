@@ -135,7 +135,7 @@ export function ChatInterface({
   const hasMessages = messages.length > 0
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] relative">
+    <div className="flex flex-col h-full relative">
       {/* Scrollable Area */}
       <div 
         ref={scrollContainerRef}
@@ -171,6 +171,7 @@ export function ChatInterface({
                     role: msg.role === "user" ? "USER" : "ASSISTANT",
                     content: msg.content
                   }} 
+                  isLoading={isLoading && i === messages.length - 1}
                 />
               ))}
               {isLoading && messages[messages.length - 1]?.role === "user" && (

@@ -52,6 +52,22 @@ export function ChatSidebar({ className }: { className?: string }) {
     router.push('/chat')
   }
 
+  const handleDeleteChat = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      const res = await fetch(`/api/chats/${id}`, { method: "DELETE" })
+      if (res.ok) {
+        toast.success("Chat deleted")
+        setChats((prev) => prev.filter((c) => c.id !== id))
+        if (params.id === id) {
+          router.push("/chat")
+        }
+      }
+    } catch (err) {
+      toast.error("Failed to delete chat")
+    }
+  }
+
   return (
     <div className={cn("flex w-64 flex-col bg-muted/30", className)}>
       <div className="p-4 border-b">
@@ -81,7 +97,7 @@ export function ChatSidebar({ className }: { className?: string }) {
                 )}
               >
                 <MessageSquare className="h-4 w-4 shrink-0" />
-                <Link href={`/chat/${chat.id}`} className="flex-1 truncate outline-none">
+                <Link href={`/chat/${chat.id}`} className="flex-1 truncate outline-none mr-6">
                   {chat.title}
                 </Link>
                 <DropdownMenu>
@@ -89,14 +105,17 @@ export function ChatSidebar({ className }: { className?: string }) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute right-1 top-1 h-6 w-6 opacity-0 group-hover:opacity-100"
+                      className="absolute right-1 h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                       <span className="sr-only">More options</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem className="text-destructive focus:text-destructive">
+                    <DropdownMenuItem 
+                      onClick={(e) => handleDeleteChat(chat.id, e as any)} 
+                      className="text-destructive focus:text-destructive"
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
                     </DropdownMenuItem>

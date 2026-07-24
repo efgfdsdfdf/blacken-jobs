@@ -4,7 +4,7 @@ import * as React from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeHighlight from "rehype-highlight"
-import { User, Bot, Eye, Code2, Loader2 } from "lucide-react"
+import { User, Bot, Eye, Code2, Loader2, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -22,7 +22,7 @@ function extractText(node: any): string {
   return ''
 }
 
-function CodeBlock({ node, inline, className, children, ...props }: any) {
+function CodeBlock({ node, inline, className, children, isLoading, ...props }: any) {
   const match = /language-([a-zA-Z0-9_]+)/.exec(className || '')
   const language = match?.[1] || 'code'
   
@@ -74,6 +74,32 @@ function CodeBlock({ node, inline, className, children, ...props }: any) {
     } catch (e) {
       // JSON is currently streaming or malformed
       if (showCode) return renderRawCode()
+
+      // If we are no longer loading but JSON parse still failed, show fallback or attempt repair
+      if (!isLoading) {
+        try {
+          // Attempt repair: simple closing bracket append
+          const repaired = JSON.parse(codeString + ']')
+          if (Array.isArray(repaired)) {
+            return (
+              <div className="animate-fade-in relative">
+                <ProjectDownloadCard files={repaired} />
+                <button onClick={() => setShowCode(true)} className="absolute top-3 right-3 text-xs bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 border border-white/10 px-2 py-1 rounded transition-colors">View Source</button>
+              </div>
+            )
+          }
+        } catch (repairError) {}
+        
+        return (
+          <div className="my-4 overflow-hidden rounded-xl border border-destructive/20 bg-destructive/10 backdrop-blur-sm p-4 text-destructive flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <AlertCircle className="h-5 w-5" />
+              <span>Project files generation failed.</span>
+            </div>
+            <button onClick={() => setShowCode(true)} className="text-xs text-destructive hover:text-white transition-colors">View Raw Output</button>
+          </div>
+        )
+      }
 
       // Calculate a rough progress based on length (since we don't know total)
       const roughSize = (codeString.length / 1024).toFixed(1)
@@ -156,7 +182,7 @@ function CodeBlock({ node, inline, className, children, ...props }: any) {
   )
 }
 
-export function MessageBubble({ message }: { message: MessageProps }) {
+export function MessageBubble({ message, isLoading }: { message: MessageProps, isLoading?: boolean }) {
   const isUser = message.role === "USER"
   
   if (message.role === "SYSTEM") return null
@@ -191,7 +217,11 @@ export function MessageBubble({ message }: { message: MessageProps }) {
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[[rehypeHighlight, { detect: true }]]}
               components={{ 
-                code: CodeBlock,
+                code: ({ node, inline, className, children, ...props }) => (
+                  <CodeBlock node={node} inline={inline} className={className} isLoading={isLoading} {...props}>
+                    {children}
+                  </CodeBlock>
+                ),
                 p: ({ children }) => <div className="mb-4 last:mb-0">{children}</div>,
                 pre: ({ children }) => <>{children}</>
               }}
