@@ -88,7 +88,10 @@ function CodeBlock({ node, inline, className, children, isLoading, ...props }: a
       } else if (files.length > 0 && isLoading) {
          // Streaming but we have SOME files parsed
          if (showCode) return renderRawCode()
-         // Fallthrough to the loader below
+         // We can optionally show the files we have, but to prevent blinking we might just show the loader
+         throw new Error("Streaming files") // Fall through to catch block to show loader
+      } else if (files.length === 0 && isLoading) {
+         throw new Error("Streaming files") // Fall through to catch block to show loader
       } else if (files.length === 0 && !isLoading) {
         // Finished loading but found ZERO files = failed to generate
         throw new Error("No files found")

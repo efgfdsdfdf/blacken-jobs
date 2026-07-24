@@ -116,9 +116,9 @@ export function ChatSidebar({ className, onChatSelect }: { className?: string; o
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="icon"
-                      className="h-7 w-7 shrink-0 opacity-100 hover:bg-background/80"
+                      className="h-7 w-7 shrink-0 bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 border-zinc-700 z-50"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                       <span className="sr-only">More options</span>
