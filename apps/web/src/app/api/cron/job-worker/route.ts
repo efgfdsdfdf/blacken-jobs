@@ -222,7 +222,7 @@ export async function GET(request: Request) {
       processedCount++
     }
 
-    return NextResponse.json({ message: \`Processed \${processedCount} applications.\` })
+    return NextResponse.json({ message: `Processed ${processedCount} applications.` })
   } catch (error) {
     console.error("Cron Error:", error)
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })

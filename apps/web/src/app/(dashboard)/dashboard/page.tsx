@@ -196,7 +196,7 @@ export default async function DashboardPage() {
             ) : (
               <div className="space-y-6">
                 {recentLogs.map((log, index) => (
-                  <div key={log.id} className="flex gap-4 relative animate-fade-in" style={{ animationDelay: \`\${index * 100}ms\` }}>
+                  <div key={log.id} className="flex gap-4 relative animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
                     {/* Timeline Line */}
                     {index !== recentLogs.length - 1 && (
                       <div className="absolute top-8 left-[19px] bottom-[-24px] w-px bg-white/5" />
@@ -212,7 +212,7 @@ export default async function DashboardPage() {
                         {log.entity}
                       </p>
                       <p className="text-sm text-zinc-500 mt-0.5 leading-relaxed">
-                        {(log.metadata as any)?.message || \`\${log.action} performed on \${log.entity}\`}
+                        {(log.metadata as any)?.message || `${log.action} performed on ${log.entity}`}
                       </p>
                       <span className="text-xs text-zinc-600 mt-1">
                         {new Date(log.createdAt).toLocaleString(undefined, { 
