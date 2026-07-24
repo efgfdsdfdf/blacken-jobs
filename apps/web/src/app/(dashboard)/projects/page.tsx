@@ -1,5 +1,5 @@
 import * as React from "react"
-import { FolderGit2, Plus, MessageSquare, Download, Clock, ExternalLink } from "lucide-react"
+import { FolderGit2, Plus, Download, Clock, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { requireAuth } from "@/dal/auth"
@@ -17,8 +17,8 @@ export default async function ProjectsPage() {
     orderBy: { updatedAt: "desc" }
   })
 
-  // Filter chats that actually have project files, or just show all chats as projects
-  const projects = chats.map(chat => {
+  // Filter ONLY chats that actually have project files generated
+  const projects = chats.reduce((acc: any[], chat) => {
     let projectFiles = null
     
     // Find the last assistant message with project_files
@@ -35,11 +35,16 @@ export default async function ProjectsPage() {
       }
     }
     
-    return {
-      ...chat,
-      projectFiles
+    // Only include if we successfully extracted project files
+    if (projectFiles) {
+      acc.push({
+        ...chat,
+        projectFiles
+      })
     }
-  })
+    
+    return acc
+  }, [])
 
   return (
     <div className="flex-1 overflow-auto bg-zinc-950 p-6 md:p-8 animate-fade-in">
@@ -67,7 +72,7 @@ export default async function ProjectsPage() {
                 <FolderGit2 className="w-10 h-10 text-zinc-500" />
               </div>
               <h3 className="text-xl font-semibold text-zinc-300">No projects yet</h3>
-              <p className="text-zinc-500 mt-2 max-w-md">Start a chat with BLACK AI and ask it to build an application for you. Your generated projects will appear here.</p>
+              <p className="text-zinc-500 mt-2 max-w-md">Start a chat with BLACK AI and ask it to build an application for you. Your generated project ZIPs will appear here.</p>
             </div>
           )}
           
@@ -85,22 +90,12 @@ export default async function ProjectsPage() {
                     </span>
                   </div>
                   <CardTitle className="text-xl text-zinc-100 mt-4 group-hover:text-primary transition-colors">{project.title}</CardTitle>
-                  <CardDescription className="text-zinc-400 mt-1 flex items-center">
-                    <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
-                    {project.messages.length} messages in chat
-                  </CardDescription>
                 </CardHeader>
                 
                 <CardContent className="pt-4 pb-2">
-                  {project.projectFiles ? (
-                    <div className="w-full">
-                      <ProjectDownloadCard files={project.projectFiles} />
-                    </div>
-                  ) : (
-                    <div className="p-6 text-center text-zinc-500 bg-zinc-900/30 rounded-xl border border-white/5 mt-2">
-                      <p className="text-sm">No downloadable files detected in this chat.</p>
-                    </div>
-                  )}
+                  <div className="w-full">
+                    <ProjectDownloadCard files={project.projectFiles} />
+                  </div>
                 </CardContent>
               </div>
               
