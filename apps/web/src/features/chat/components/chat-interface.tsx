@@ -50,19 +50,19 @@ export function ChatInterface({
   // Auto-scroll to bottom only if already at bottom
   React.useEffect(() => {
     if (isAtBottom && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "auto" })
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
     }
   }, [messages])
 
   // Force scroll to bottom on initial entry
   React.useEffect(() => {
-    if (messages.length > 0) {
+    if (mounted && messages.length > 0) {
       const timer = setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "auto" })
-      }, 100)
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+      }, 500)
       return () => clearTimeout(timer)
     }
-  }, [chatId])
+  }, [mounted, chatId])
 
   // Custom submit handler to prevent empty submissions
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {

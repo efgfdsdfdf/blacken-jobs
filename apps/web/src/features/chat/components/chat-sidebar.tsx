@@ -46,6 +46,13 @@ export function ChatSidebar({ className }: { className?: string }) {
 
   React.useEffect(() => {
     fetchChats()
+    
+    // Poll every 5 seconds to catch smart title updates
+    const interval = setInterval(() => {
+      fetchChats()
+    }, 5000)
+    
+    return () => clearInterval(interval)
   }, [fetchChats])
 
   const handleNewChat = () => {
@@ -105,7 +112,7 @@ export function ChatSidebar({ className }: { className?: string }) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute right-1 h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                      className="absolute right-1 h-7 w-7 opacity-100 transition-opacity bg-background/80 hover:bg-background shadow-sm"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                       <span className="sr-only">More options</span>
