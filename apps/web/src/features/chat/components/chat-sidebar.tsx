@@ -62,17 +62,19 @@ export function ChatSidebar({ className, onChatSelect }: { className?: string; o
   const handleDeleteChat = async (id: string, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    
+    // Optimistic UI update: instantly remove it from the sidebar
+    setChats((prev) => prev.filter((c) => c.id !== id))
+    if (params.id === id) {
+      router.push("/chat")
+    }
+
     try {
       const res = await fetch(`/api/chats/${id}`, { method: "DELETE" })
-      if (res.ok) {
-        toast.success("Chat deleted")
-        setChats((prev) => prev.filter((c) => c.id !== id))
-        if (params.id === id) {
-          router.push("/chat")
-        }
-      } else {
+      if (!res.ok) {
         const text = await res.text()
         toast.error(`Failed to delete chat: ${text}`)
+        // If it fails, the 5-second auto-refresh will pull it back naturally
       }
     } catch (err: any) {
       toast.error(`Error: ${err.message}`)
