@@ -20,7 +20,7 @@ import type { SessionUser } from "@repo/types";
  *
  * @returns The authenticated user or null if not authenticated.
  */
-export const getAuthenticatedUser = cache(async (): Promise<SessionUser | null> => {
+export const getAuthenticatedUser = cache(async function getAuthenticatedUser(): Promise<SessionUser | null> {
   const supabase = await createClient();
 
   const {
