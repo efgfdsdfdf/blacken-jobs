@@ -7,6 +7,7 @@
 
 import "server-only";
 
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@repo/db";
@@ -19,7 +20,7 @@ import type { SessionUser } from "@repo/types";
  *
  * @returns The authenticated user or null if not authenticated.
  */
-export async function getAuthenticatedUser(): Promise<SessionUser | null> {
+export const getAuthenticatedUser = cache(async (): Promise<SessionUser | null> => {
   const supabase = await createClient();
 
   const {
@@ -67,7 +68,7 @@ export async function getAuthenticatedUser(): Promise<SessionUser | null> {
     role: dbUser.role,
     supabaseId: dbUser.supabaseId,
   };
-}
+});
 
 /**
  * Require authentication. Redirects to /login if no valid session exists.
