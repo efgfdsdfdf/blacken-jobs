@@ -7,6 +7,8 @@ import { prisma } from "@repo/db"
 import Link from "next/link"
 import { ProjectDownloadCard } from "@/features/chat/components/project-download-card"
 
+export const dynamic = "force-dynamic"
+
 export default async function ProjectsPage() {
   const user = await requireAuth()
 
@@ -73,7 +75,7 @@ export default async function ProjectsPage() {
             <h1 className="text-3xl font-bold tracking-tight text-zinc-100">AI Projects</h1>
             <p className="text-zinc-400 mt-1">Access and download the applications you built with BLACK AI.</p>
           </div>
-          <Link href="/dashboard">
+          <Link href="/chat">
             <Button className="w-full md:w-auto bg-primary text-primary-foreground shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] transition-all">
               <Plus className="w-4 h-4 mr-2" />
               New Project

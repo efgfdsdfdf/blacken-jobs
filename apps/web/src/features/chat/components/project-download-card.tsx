@@ -5,6 +5,13 @@ import { Download, FileCode2, Loader2, CheckCircle2, FolderDown } from "lucide-r
 import { Button } from "@/components/ui/button"
 import JSZip from "jszip"
 import { saveAs } from "file-saver"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 export interface ProjectFile {
   path: string
@@ -109,9 +116,23 @@ export function ProjectDownloadCard({ files }: { files: ProjectFile[] }) {
       <div className="p-4 space-y-4">
         <div className="max-h-[200px] overflow-y-auto space-y-1 pr-2 rounded bg-black/20 p-2">
           {files.map((file, i) => (
-            <div key={i} className="text-xs font-mono text-zinc-400 flex items-center gap-2 py-1 px-2 hover:bg-white/5 rounded">
-              <span className="text-primary/60">→</span> {file.path}
-            </div>
+            <Dialog key={i}>
+              <DialogTrigger asChild>
+                <button className="w-full text-left text-xs font-mono text-zinc-400 flex items-center gap-2 py-1.5 px-2 hover:bg-white/10 hover:text-white rounded transition-colors cursor-pointer">
+                  <span className="text-primary/60">→</span> {file.path}
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col bg-zinc-950 border-white/10">
+                <DialogHeader>
+                  <DialogTitle className="font-mono text-sm text-zinc-300">{file.path}</DialogTitle>
+                </DialogHeader>
+                <div className="flex-1 overflow-auto bg-black/50 p-4 rounded-md mt-2 border border-white/5">
+                  <pre className="text-xs font-mono text-zinc-300 whitespace-pre-wrap break-words">
+                    <code>{file.content}</code>
+                  </pre>
+                </div>
+              </DialogContent>
+            </Dialog>
           ))}
         </div>
 
