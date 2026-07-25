@@ -29,14 +29,6 @@ export function ProjectDownloadCard({ files }: { files: ProjectFile[] }) {
     }
   }, [])
 
-  const handleExport = async () => {
-    if (hasFileSystemAPI) {
-      await exportToFolder()
-    } else {
-      await exportToZip()
-    }
-  }
-
   const exportToFolder = async () => {
     try {
       setIsExporting(true)
@@ -153,33 +145,55 @@ export function ProjectDownloadCard({ files }: { files: ProjectFile[] }) {
           ))}
         </div>
 
-        <Button 
-          onClick={handleExport} 
-          disabled={isExporting || downloaded || files.length === 0}
-          className="w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 h-12 rounded-lg font-medium transition-all"
-        >
-          {isExporting ? (
-            <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Saving files...
-            </>
-          ) : downloaded ? (
-            <>
-              <CheckCircle2 className="mr-2 h-5 w-5 text-green-400" />
-              <span className="text-green-400">Exported Successfully</span>
-            </>
-          ) : hasFileSystemAPI ? (
-            <>
-              <FolderDown className="mr-2 h-5 w-5" />
-              Save to Local Folder
-            </>
-          ) : (
-            <>
-              <Download className="mr-2 h-5 w-5" />
-              Download Project (.zip)
-            </>
+        <div className="flex flex-col sm:flex-row gap-3">
+          {hasFileSystemAPI && (
+            <Button 
+              onClick={exportToFolder} 
+              disabled={isExporting || downloaded || files.length === 0}
+              className="flex-1 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 h-12 rounded-lg font-medium transition-all"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Saving...
+                </>
+              ) : downloaded ? (
+                <>
+                  <CheckCircle2 className="mr-2 h-5 w-5 text-green-400" />
+                  Exported
+                </>
+              ) : (
+                <>
+                  <FolderDown className="mr-2 h-5 w-5" />
+                  Save to Local Folder
+                </>
+              )}
+            </Button>
           )}
-        </Button>
+
+          <Button 
+            onClick={exportToZip} 
+            disabled={isExporting || downloaded || files.length === 0}
+            className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-white/10 h-12 rounded-lg font-medium transition-all"
+          >
+            {isExporting ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Zipping...
+              </>
+            ) : downloaded ? (
+              <>
+                <CheckCircle2 className="mr-2 h-5 w-5 text-green-400" />
+                Downloaded
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-5 w-5" />
+                Download as .ZIP
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   )
