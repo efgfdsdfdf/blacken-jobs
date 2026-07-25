@@ -25,7 +25,7 @@ export default async function ProjectsPage() {
     for (let i = chat.messages.length - 1; i >= 0; i--) {
       const msg = chat.messages[i]
       if (msg.role === "ASSISTANT" && msg.content.includes("```project_files")) {
-        const match = msg.content.match(/```project_files\n([\s\S]*?)\n```/)
+        const match = msg.content.match(/```project_files\s*([\s\S]*?)(?:```|$)/)
         if (match && match[1]) {
           const files: any[] = []
           const regex = /<file path="([^"]+)">([\s\S]*?)<\/file>/g
