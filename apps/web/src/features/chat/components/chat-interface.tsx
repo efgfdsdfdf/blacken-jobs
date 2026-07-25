@@ -29,7 +29,7 @@ export function ChatInterface({
     setMounted(true)
   }, [])
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error, reload } = useChat({
     api: "/api/chat",
     id: activeChatId === "new" ? undefined : activeChatId,
     // @ts-ignore
@@ -112,12 +112,27 @@ export function ChatInterface({
 
   if (!mounted) return null
 
+  // If the last message is from the user and we are not loading, the stream was aborted or failed
+  const showRegenerate = messages.length > 0 && messages[messages.length - 1].role === 'user' && !isLoading
+
   const inputFormContent = (
     <div className="w-full mx-auto">
       {error && (
         <div className="mb-4 flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/20 p-4 text-sm text-destructive shadow-lg backdrop-blur-md animate-slide-in-up">
           <AlertCircle className="h-5 w-5" />
           <p>{error.message || "An error occurred during chat."}</p>
+        </div>
+      )}
+      
+      {showRegenerate && !error && (
+        <div className="mb-4 flex items-center justify-center animate-fade-in">
+          <Button 
+            onClick={() => reload()} 
+            variant="outline" 
+            className="rounded-full bg-zinc-900/80 border-white/10 hover:bg-zinc-800 text-zinc-300"
+          >
+            Stream Interrupted — Click to Regenerate
+          </Button>
         </div>
       )}
 
