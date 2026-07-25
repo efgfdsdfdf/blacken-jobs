@@ -4,7 +4,7 @@ import * as React from "react"
 import { Download, FileCode2, Loader2, CheckCircle2, FolderDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import JSZip from "jszip"
-import { saveAs } from "file-saver"
+import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
@@ -42,7 +42,7 @@ export function ProjectDownloadCard({ files }: { files: ProjectFile[] }) {
     try {
       setIsExporting(true)
       // @ts-ignore - TS doesn't know about File System Access API by default
-      const dirHandle = await window.showDirectoryPicker({
+      const dirHandle = await (window as any).showDirectoryPicker({
         mode: "readwrite"
       })
 
@@ -67,11 +67,13 @@ export function ProjectDownloadCard({ files }: { files: ProjectFile[] }) {
       }
 
       setDownloaded(true)
+      toast.success("Files successfully saved to your folder!")
       setTimeout(() => setDownloaded(false), 3000)
     } catch (error: any) {
       // If user aborts, don't show error
       if (error.name !== "AbortError") {
         console.error("Failed to export to folder", error)
+        toast.error("Folder access denied, falling back to ZIP download...")
         // Fallback to ZIP on unexpected failure
         await exportToZip()
       }
@@ -90,12 +92,27 @@ export function ProjectDownloadCard({ files }: { files: ProjectFile[] }) {
       })
 
       const content = await zip.generateAsync({ type: "blob" })
-      saveAs(content, "black-ai-project.zip")
+      
+      // Native HTML5 download approach (more reliable on mobile than file-saver)
+      const url = window.URL.createObjectURL(content)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'black-ai-project.zip')
+      document.body.appendChild(link)
+      link.click()
+      
+      // Clean up
+      setTimeout(() => {
+        link.remove()
+        window.URL.revokeObjectURL(url)
+      }, 100)
       
       setDownloaded(true)
+      toast.success("Project downloaded successfully as ZIP!")
       setTimeout(() => setDownloaded(false), 3000)
     } catch (error) {
       console.error("Failed to generate zip", error)
+      toast.error("Failed to generate ZIP file.")
     } finally {
       setIsExporting(false)
     }
