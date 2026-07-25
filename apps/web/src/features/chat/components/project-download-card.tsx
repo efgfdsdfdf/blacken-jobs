@@ -3,7 +3,6 @@
 import * as React from "react"
 import { Download, FileCode2, Loader2, CheckCircle2, FolderDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import JSZip from "jszip"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -85,27 +84,28 @@ export function ProjectDownloadCard({ files }: { files: ProjectFile[] }) {
   const exportToZip = async () => {
     try {
       setIsExporting(true)
-      const zip = new JSZip()
       
-      files.forEach((file) => {
-        zip.file(file.path, file.content)
-      })
-
-      const content = await zip.generateAsync({ type: "blob" })
+      // Native Form POST approach (bulletproof on mobile devices like iOS Safari)
+      const form = document.createElement('form')
+      form.method = 'POST'
+      form.action = '/api/download'
+      // Use _top instead of _blank to avoid popup blockers on mobile, 
+      // the attachment headers from the API will prevent actual navigation.
+      form.target = '_top'
       
-      // Native HTML5 download approach (more reliable on mobile than file-saver)
-      const url = window.URL.createObjectURL(content)
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', 'black-ai-project.zip')
-      document.body.appendChild(link)
-      link.click()
+      const input = document.createElement('input')
+      input.type = 'hidden'
+      input.name = 'payload'
+      input.value = JSON.stringify({ files })
+      
+      form.appendChild(input)
+      document.body.appendChild(form)
+      form.submit()
       
       // Clean up
       setTimeout(() => {
-        link.remove()
-        window.URL.revokeObjectURL(url)
-      }, 100)
+        form.remove()
+      }, 500)
       
       setDownloaded(true)
       toast.success("Project downloaded successfully as ZIP!")
