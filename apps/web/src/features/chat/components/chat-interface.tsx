@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useChat } from "@ai-sdk/react"
 import { toast } from "sonner"
 import { MessageBubble, type MessageProps } from "./message-bubble"
+import { useRouter } from "next/navigation"
 
 export function ChatInterface({ 
   chatId, 
@@ -15,10 +16,14 @@ export function ChatInterface({
   chatId: string
   initialMessages?: MessageProps[] 
 }) {
+  const router = useRouter()
   const [mounted, setMounted] = React.useState(false)
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
   const scrollContainerRef = React.useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = React.useState(true)
+  
+  // Track the actual active chat ID so we don't keep sending "new"
+  const [activeChatId, setActiveChatId] = React.useState(chatId)
 
   React.useEffect(() => {
     setMounted(true)
@@ -26,12 +31,19 @@ export function ChatInterface({
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
     api: "/api/chat",
-    id: chatId === "new" ? undefined : chatId,
+    id: activeChatId === "new" ? undefined : activeChatId,
     // @ts-ignore
     initialMessages,
     streamProtocol: "text",
     body: {
-      chatId
+      chatId: activeChatId
+    },
+    onResponse: (response) => {
+      const id = response.headers.get("x-chat-id")
+      if (id && id !== activeChatId) {
+        setActiveChatId(id)
+        router.replace(`/chat/${id}`)
+      }
     },
     onError: (err) => {
       toast.error("Failed to send message: " + err.message)
