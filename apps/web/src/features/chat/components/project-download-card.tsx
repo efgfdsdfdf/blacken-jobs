@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Download, FileCode2, Loader2, CheckCircle2 } from "lucide-react"
+import { Download, FileCode2, Loader2, CheckCircle2, FolderDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import JSZip from "jszip"
 import { saveAs } from "file-saver"
@@ -12,23 +12,77 @@ export interface ProjectFile {
 }
 
 export function ProjectDownloadCard({ files }: { files: ProjectFile[] }) {
-  const [isZipping, setIsZipping] = React.useState(false)
+  const [isExporting, setIsExporting] = React.useState(false)
   const [downloaded, setDownloaded] = React.useState(false)
+  const [hasFileSystemAPI, setHasFileSystemAPI] = React.useState(false)
 
-  const handleDownload = async () => {
+  React.useEffect(() => {
+    // Check if the browser supports the File System Access API
+    if (typeof window !== "undefined" && "showDirectoryPicker" in window) {
+      setHasFileSystemAPI(true)
+    }
+  }, [])
+
+  const handleExport = async () => {
+    if (hasFileSystemAPI) {
+      await exportToFolder()
+    } else {
+      await exportToZip()
+    }
+  }
+
+  const exportToFolder = async () => {
     try {
-      setIsZipping(true)
+      setIsExporting(true)
+      // @ts-ignore - TS doesn't know about File System Access API by default
+      const dirHandle = await window.showDirectoryPicker({
+        mode: "readwrite"
+      })
+
+      for (const file of files) {
+        // Split path by / to handle subdirectories
+        const pathParts = file.path.split("/").filter(Boolean)
+        const fileName = pathParts.pop()
+        
+        if (!fileName) continue
+
+        let currentDirHandle = dirHandle
+        // Create necessary subdirectories
+        for (const part of pathParts) {
+          currentDirHandle = await currentDirHandle.getDirectoryHandle(part, { create: true })
+        }
+
+        // Create and write to the file
+        const fileHandle = await currentDirHandle.getFileHandle(fileName, { create: true })
+        const writable = await fileHandle.createWritable()
+        await writable.write(file.content)
+        await writable.close()
+      }
+
+      setDownloaded(true)
+      setTimeout(() => setDownloaded(false), 3000)
+    } catch (error: any) {
+      // If user aborts, don't show error
+      if (error.name !== "AbortError") {
+        console.error("Failed to export to folder", error)
+        // Fallback to ZIP on unexpected failure
+        await exportToZip()
+      }
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const exportToZip = async () => {
+    try {
+      setIsExporting(true)
       const zip = new JSZip()
       
-      // Add all files to the ZIP
       files.forEach((file) => {
         zip.file(file.path, file.content)
       })
 
-      // Generate the ZIP file
       const content = await zip.generateAsync({ type: "blob" })
-      
-      // Trigger download
       saveAs(content, "black-ai-project.zip")
       
       setDownloaded(true)
@@ -36,7 +90,7 @@ export function ProjectDownloadCard({ files }: { files: ProjectFile[] }) {
     } catch (error) {
       console.error("Failed to generate zip", error)
     } finally {
-      setIsZipping(false)
+      setIsExporting(false)
     }
   }
 
@@ -62,19 +116,24 @@ export function ProjectDownloadCard({ files }: { files: ProjectFile[] }) {
         </div>
 
         <Button 
-          onClick={handleDownload} 
-          disabled={isZipping || downloaded || files.length === 0}
+          onClick={handleExport} 
+          disabled={isExporting || downloaded || files.length === 0}
           className="w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 h-12 rounded-lg font-medium transition-all"
         >
-          {isZipping ? (
+          {isExporting ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Compressing...
+              Saving files...
             </>
           ) : downloaded ? (
             <>
               <CheckCircle2 className="mr-2 h-5 w-5 text-green-400" />
-              <span className="text-green-400">Downloaded Successfully</span>
+              <span className="text-green-400">Exported Successfully</span>
+            </>
+          ) : hasFileSystemAPI ? (
+            <>
+              <FolderDown className="mr-2 h-5 w-5" />
+              Save to Local Folder
             </>
           ) : (
             <>

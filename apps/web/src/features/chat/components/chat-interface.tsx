@@ -52,7 +52,7 @@ export function ChatInterface({
     if (isAtBottom && scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({
         top: scrollContainerRef.current.scrollHeight,
-        behavior: "smooth"
+        behavior: "auto"
       })
     }
   }, [messages])
@@ -118,6 +118,7 @@ export function ChatInterface({
           type="button"
           size="icon"
           variant="ghost"
+          onClick={() => toast.info("Image and file uploads are coming in a future update!")}
           className="mb-1 ml-1 h-10 w-10 rounded-full text-zinc-400 hover:text-zinc-100 hover:bg-white/5 transition-colors"
         >
           <Paperclip className="h-5 w-5" />
