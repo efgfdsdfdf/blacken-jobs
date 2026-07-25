@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@repo/db"
 import { anthropic } from "@ai-sdk/anthropic"
 import { streamText } from "ai"
-import { NextResponse } from "next/server"
+import { NextResponse, unstable_after as after } from "next/server"
 
 export const maxDuration = 60 // Allow up to 60 seconds for AI response
 
@@ -113,37 +113,39 @@ Be concise, brilliant, and extremely helpful.`
       model: anthropic("claude-sonnet-4-5-20250929"),
       system: systemPrompt,
       messages: coreMessages,
-      onFinish: async ({ text }) => {
-        // Save the assistant's response to the DB when the stream finishes
-        try {
-          await prisma.message.create({
-            data: {
-              chatId: activeChatId,
-              role: "ASSISTANT",
-              content: text
+      onFinish: ({ text }) => {
+        after(async () => {
+          // Save the assistant's response to the DB when the stream finishes
+          try {
+            await prisma.message.create({
+              data: {
+                chatId: activeChatId,
+                role: "ASSISTANT",
+                content: text
+              }
+            })
+            
+            // Generate a smart topic title in the background if this is a new chat
+            if (isNewChat) {
+              try {
+                const { generateText } = await import("ai");
+                const { text: topicTitle } = await generateText({
+                  model: anthropic("claude-sonnet-4-5-20250929"),
+                  prompt: `Based on this initial request and response, generate a concise 2-5 word topic title for this chat. Do not use quotes, punctuation, or prefixes like "Title:". Just output the title.\nUser: ${messages[0]?.content || "Hello"}\nAssistant: ${text.substring(0, 500)}`
+                })
+                
+                await prisma.chat.update({
+                  where: { id: activeChatId },
+                  data: { title: topicTitle.trim() }
+                })
+              } catch(e) {
+                console.error("Failed to generate title", e)
+              }
             }
-          })
-          
-          // Generate a smart topic title in the background if this is a new chat
-          if (isNewChat) {
-            try {
-              const { generateText } = await import("ai");
-              const { text: topicTitle } = await generateText({
-                model: anthropic("claude-sonnet-4-5-20250929"),
-                prompt: `Based on this initial request and response, generate a concise 2-5 word topic title for this chat. Do not use quotes, punctuation, or prefixes like "Title:". Just output the title.\nUser: ${messages[0]?.content || "Hello"}\nAssistant: ${text.substring(0, 500)}`
-              })
-              
-              await prisma.chat.update({
-                where: { id: activeChatId },
-                data: { title: topicTitle.trim() }
-              })
-            } catch(e) {
-              console.error("Failed to generate title", e)
-            }
+          } catch (dbError) {
+            console.error("Failed to save AI response to DB:", dbError)
           }
-        } catch (dbError) {
-          console.error("Failed to save AI response to DB:", dbError)
-        }
+        })
       }
     })
 
