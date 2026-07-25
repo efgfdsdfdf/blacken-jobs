@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Download, FileCode2, Loader2, CheckCircle2, FolderDown } from "lucide-react"
+import { Download, FileCode2, Loader2, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import {
@@ -20,58 +20,6 @@ export interface ProjectFile {
 export function ProjectDownloadCard({ files }: { files: ProjectFile[] }) {
   const [isExporting, setIsExporting] = React.useState(false)
   const [downloaded, setDownloaded] = React.useState(false)
-  const [hasFileSystemAPI, setHasFileSystemAPI] = React.useState(false)
-
-  React.useEffect(() => {
-    // Check if the browser supports the File System Access API
-    if (typeof window !== "undefined" && "showDirectoryPicker" in window) {
-      setHasFileSystemAPI(true)
-    }
-  }, [])
-
-  const exportToFolder = async () => {
-    try {
-      setIsExporting(true)
-      // @ts-ignore - TS doesn't know about File System Access API by default
-      const dirHandle = await (window as any).showDirectoryPicker({
-        mode: "readwrite"
-      })
-
-      for (const file of files) {
-        // Split path by / to handle subdirectories
-        const pathParts = file.path.split("/").filter(Boolean)
-        const fileName = pathParts.pop()
-        
-        if (!fileName) continue
-
-        let currentDirHandle = dirHandle
-        // Create necessary subdirectories
-        for (const part of pathParts) {
-          currentDirHandle = await currentDirHandle.getDirectoryHandle(part, { create: true })
-        }
-
-        // Create and write to the file
-        const fileHandle = await currentDirHandle.getFileHandle(fileName, { create: true })
-        const writable = await fileHandle.createWritable()
-        await writable.write(file.content)
-        await writable.close()
-      }
-
-      setDownloaded(true)
-      toast.success("Files successfully saved to your folder!")
-      setTimeout(() => setDownloaded(false), 3000)
-    } catch (error: any) {
-      // If user aborts, don't show error
-      if (error.name !== "AbortError") {
-        console.error("Failed to export to folder", error)
-        toast.error("Folder access denied, falling back to ZIP download...")
-        // Fallback to ZIP on unexpected failure
-        await exportToZip()
-      }
-    } finally {
-      setIsExporting(false)
-    }
-  }
 
   const exportToZip = async () => {
     try {
@@ -145,55 +93,28 @@ export function ProjectDownloadCard({ files }: { files: ProjectFile[] }) {
           ))}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
-          {hasFileSystemAPI && (
-            <Button 
-              onClick={exportToFolder} 
-              disabled={isExporting || downloaded || files.length === 0}
-              className="flex-1 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 h-12 rounded-lg font-medium transition-all"
-            >
-              {isExporting ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Saving...
-                </>
-              ) : downloaded ? (
-                <>
-                  <CheckCircle2 className="mr-2 h-5 w-5 text-green-400" />
-                  Exported
-                </>
-              ) : (
-                <>
-                  <FolderDown className="mr-2 h-5 w-5" />
-                  Save to Local Folder
-                </>
-              )}
-            </Button>
+        <Button 
+          onClick={exportToZip} 
+          disabled={isExporting || downloaded || files.length === 0}
+          className="w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 h-12 rounded-lg font-medium transition-all"
+        >
+          {isExporting ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Zipping...
+            </>
+          ) : downloaded ? (
+            <>
+              <CheckCircle2 className="mr-2 h-5 w-5 text-green-400" />
+              Downloaded
+            </>
+          ) : (
+            <>
+              <Download className="mr-2 h-5 w-5" />
+              Download Project (.zip)
+            </>
           )}
-
-          <Button 
-            onClick={exportToZip} 
-            disabled={isExporting || downloaded || files.length === 0}
-            className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-white/10 h-12 rounded-lg font-medium transition-all"
-          >
-            {isExporting ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Zipping...
-              </>
-            ) : downloaded ? (
-              <>
-                <CheckCircle2 className="mr-2 h-5 w-5 text-green-400" />
-                Downloaded
-              </>
-            ) : (
-              <>
-                <Download className="mr-2 h-5 w-5" />
-                Download as .ZIP
-              </>
-            )}
-          </Button>
-        </div>
+        </Button>
       </div>
     </div>
   )
