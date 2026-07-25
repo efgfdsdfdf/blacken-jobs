@@ -101,7 +101,7 @@ export function ChatInterface({
   if (!mounted) return null
 
   const inputFormContent = (
-    <div className="w-full max-w-3xl mx-auto w-full">
+    <div className="w-full max-w-4xl mx-auto">
       {error && (
         <div className="mb-4 flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/20 p-4 text-sm text-destructive shadow-lg backdrop-blur-md animate-slide-in-up">
           <AlertCircle className="h-5 w-5" />
@@ -179,12 +179,12 @@ export function ChatInterface({
             </div>
             
             {/* Input Form embedded in the center for new chats */}
-            <div className="w-full max-w-3xl mx-auto w-full">
+            <div className="w-full max-w-4xl mx-auto">
               {inputFormContent}
             </div>
           </div>
         ) : (
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-4xl">
             <div className="flex flex-col space-y-8 pb-32">
               {messages.map((msg, i) => (
                 <MessageBubble 
