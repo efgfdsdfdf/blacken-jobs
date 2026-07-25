@@ -162,7 +162,7 @@ export function ChatInterface({
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-2 md:px-8 pt-4 md:pt-8 pb-4"
+        className="flex-1 overflow-y-auto overflow-x-hidden px-2 md:px-8 pt-4 md:pt-8 pb-4"
       >
         {!hasMessages ? (
           <div className="flex min-h-[70vh] flex-col items-center justify-center space-y-10 animate-fade-in px-4">
