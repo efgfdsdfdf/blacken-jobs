@@ -23,7 +23,8 @@ export function ChatInterface({
   const [isAtBottom, setIsAtBottom] = React.useState(true)
   
   // Track the actual active chat ID so we don't keep sending "new"
-  const [activeChatId, setActiveChatId] = React.useState(chatId)
+  const [activeChatId, setActiveChatId] = React.useState<string>(chatId)
+  const activeChatIdRef = React.useRef<string>(chatId)
 
   React.useEffect(() => {
     setMounted(true)
@@ -42,7 +43,24 @@ export function ChatInterface({
       const id = response.headers.get("x-chat-id")
       if (id && id !== activeChatId) {
         setActiveChatId(id)
+        activeChatIdRef.current = id
         router.replace(`/chat/${id}`)
+      }
+    },
+    onFinish: async (message) => {
+      try {
+        const finalChatId = activeChatIdRef.current === "new" ? undefined : activeChatIdRef.current
+        
+        await fetch("/api/chat/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            chatId: finalChatId, 
+            message 
+          })
+        })
+      } catch (err) {
+        console.error("Failed to save message to DB", err)
       }
     },
     onError: (err) => {

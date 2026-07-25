@@ -116,35 +116,25 @@ Be concise, brilliant, and extremely helpful.`
       onFinish: async (event) => {
         console.log(`[CHAT] Stream finished. Reason: ${event.finishReason}. Text length: ${event.text.length}`)
         
-        // Save the assistant's response to the DB when the stream finishes or aborts
-        try {
-          await prisma.message.create({
-            data: {
-              chatId: activeChatId,
-              role: "ASSISTANT",
-              content: event.text
-            }
-          })
-          
-          // Generate a smart topic title in the background if this is a new chat
-          if (isNewChat) {
-            try {
-              const { generateText } = await import("ai");
-              const { text: topicTitle } = await generateText({
-                model: anthropic("claude-sonnet-4-5-20250929"),
-                prompt: `Based on this initial request and response, generate a concise 2-5 word topic title for this chat. Do not use quotes, punctuation, or prefixes like "Title:". Just output the title.\nUser: ${messages[0]?.content || "Hello"}\nAssistant: ${event.text.substring(0, 500)}`
-              })
-              
-              await prisma.chat.update({
-                where: { id: activeChatId },
-                data: { title: topicTitle.trim() }
-              })
-            } catch(e) {
-              console.error("[CHAT] Failed to generate title", e)
-            }
+        // Note: The message is saved to the DB by the client-side onFinish callback 
+        // to avoid Vercel serverless background task execution limits.
+        
+        // Generate a smart topic title in the background if this is a new chat
+        if (isNewChat) {
+          try {
+            const { generateText } = await import("ai");
+            const { text: topicTitle } = await generateText({
+              model: anthropic("claude-sonnet-4-5-20250929"),
+              prompt: `Based on this initial request and response, generate a concise 2-5 word topic title for this chat. Do not use quotes, punctuation, or prefixes like "Title:". Just output the title.\nUser: ${messages[0]?.content || "Hello"}\nAssistant: ${event.text.substring(0, 500)}`
+            })
+            
+            await prisma.chat.update({
+              where: { id: activeChatId },
+              data: { title: topicTitle.trim() }
+            })
+          } catch(e) {
+            console.error("[CHAT] Failed to generate title", e)
           }
-        } catch (dbError) {
-          console.error("[CHAT] Failed to save AI response to DB:", dbError)
         }
       }
     })
