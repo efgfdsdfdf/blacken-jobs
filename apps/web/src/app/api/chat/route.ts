@@ -32,8 +32,10 @@ export async function POST(req: Request) {
 
     // Determine the chat to use or create a new one
     let activeChatId = chatId
+    let isNewChat = false
     
     if (!activeChatId || activeChatId === "new") {
+      isNewChat = true
       // Get the first user message for the title
       const firstUserMsg = messages.find((m: any) => m.role === "user")?.content || "New Chat"
       const title = firstUserMsg.slice(0, 50) + (firstUserMsg.length > 50 ? "..." : "")
@@ -122,13 +124,13 @@ Be concise, brilliant, and extremely helpful.`
             }
           })
           
-          // Generate a smart topic title in the background if this is the first turn
-          if (messages.length === 1) {
+          // Generate a smart topic title in the background if this is a new chat
+          if (isNewChat) {
             try {
               const { generateText } = await import("ai");
               const { text: topicTitle } = await generateText({
-                model: anthropic("claude-3-5-haiku-latest"),
-                prompt: `Based on this initial request and response, generate a concise 2-5 word topic title for this chat. Do not use quotes, punctuation, or prefixes like "Title:". Just output the title.\nUser: ${messages[0].content}\nAssistant: ${text.substring(0, 500)}`
+                model: anthropic("claude-sonnet-4-5-20250929"),
+                prompt: `Based on this initial request and response, generate a concise 2-5 word topic title for this chat. Do not use quotes, punctuation, or prefixes like "Title:". Just output the title.\nUser: ${messages[0]?.content || "Hello"}\nAssistant: ${text.substring(0, 500)}`
               })
               
               await prisma.chat.update({
