@@ -162,14 +162,22 @@ export function InterviewsPage({ interviews }: { interviews: Interview[] }) {
                         </p>
                       </div>
                     )}
-                    {interview.meetingLink && (
-                      <a href={interview.meetingLink} target="_blank" rel="noopener noreferrer">
-                        <Button size="sm" className="bg-purple-500/20 text-purple-400 border border-purple-500/20 hover:bg-purple-500/30">
-                          <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                          Join
+                    <div className="flex flex-col gap-2">
+                      <Link href={`/interviews/${interview.id}/prep`}>
+                        <Button size="sm" className="w-full bg-purple-500/20 text-purple-400 border border-purple-500/20 hover:bg-purple-500/30">
+                          <Brain className="h-3.5 w-3.5 mr-1.5" />
+                          Practice
                         </Button>
-                      </a>
-                    )}
+                      </Link>
+                      {interview.meetingLink && (
+                        <a href={interview.meetingLink} target="_blank" rel="noopener noreferrer">
+                          <Button size="sm" variant="outline" className="w-full border-white/5 text-zinc-300">
+                            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                            Join
+                          </Button>
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
                 {interview.interviewerName && (
