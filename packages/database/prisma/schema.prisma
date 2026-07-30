@@ -1,8 +1,9 @@
 // =============================================================================
-// BLACK AI — Prisma Schema
+// BLACK AI — Prisma Schema (Job Hunter Agent Edition)
 // =============================================================================
 // Production-grade database schema for the BLACK AI platform.
-// Models: User, Profile, UserSettings, Notification, AuditLog
+// Includes: User, Profile, Chat, Job Hunting, Applications, Interviews,
+// Email Monitoring, Resume Management, Analytics, Automation
 // =============================================================================
 
 datasource db {
@@ -43,6 +44,122 @@ enum NotificationType {
   WARNING
   ERROR
   SYSTEM
+  JOB_FOUND
+  APPLICATION_SUBMITTED
+  INTERVIEW_INVITATION
+  RECRUITER_MESSAGE
+  REJECTION
+  ASSESSMENT
+  OFFER
+  APPROVAL_NEEDED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum JobStatus {
+  FOUND
+  SAVED
+  APPLIED
+  UNDER_REVIEW
+  SHORTLISTED
+  INTERVIEWING
+  ASSESSMENT
+  OFFER
+  REJECTED
+  WITHDRAWN
+  EXPIRED
+}
+
+enum JobLocationType {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+enum JobSource {
+  LINKEDIN
+  INDEED
+  GLASSDOOR
+  WELLFOUND
+  ZIPRECRUITER
+  REMOTEOK
+  ADZUNA
+  JSEARCH
+  THE_MUSE
+  COMPANY_PORTAL
+  MANUAL
+  OTHER
+}
+
+enum ApplicationMethod {
+  AUTO_APPLIED
+  ASSISTED
+  MANUAL
+  EXTERNAL_LINK
+}
+
+enum InterviewFormat {
+  VIDEO
+  PHONE
+  ONSITE
+  TAKE_HOME
+  CODING_LIVE
+  PANEL
+  BEHAVIORAL
+  TECHNICAL
+}
+
+enum EmailCategory {
+  INTERVIEW_INVITATION
+  RECRUITER_MESSAGE
+  ASSESSMENT_LINK
+  OFFER_LETTER
+  REJECTION
+  FOLLOW_UP
+  GENERAL
+  SPAM
+}
+
+enum ConnectedAccountType {
+  LINKEDIN
+  INDEED
+  GLASSDOOR
+  WELLFOUND
+  ZIPRECRUITER
+  GMAIL
+  OUTLOOK
+  TELEGRAM
+  WHATSAPP
+  GITHUB
+}
+
+enum NotificationChannel {
+  EMAIL
+  PUSH
+  TELEGRAM
+  WHATSAPP
+  IN_APP
+}
+
+enum AutomationStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  FAILED
+  IDLE
+}
+
+enum WorkAuthorizationType {
+  CITIZEN
+  PERMANENT_RESIDENT
+  WORK_VISA
+  STUDENT_VISA
+  NEED_SPONSORSHIP
+  OTHER
 }
 
 // -----------------------------------------------------------------------------
@@ -61,15 +178,24 @@ model User {
   deletedAt DateTime?
 
   // Relations
-  profile       Profile?
-  settings      UserSettings?
-  notifications Notification[]
-  chats         Chat[]
-  jobs          Job[]
-  automations   Automation[]
-  resumes       Resume[]
-  auditLogs     AuditLog[]     @relation("UserAuditLogs")
-  performedLogs AuditLog[]     @relation("ActorAuditLogs")
+  profile             Profile?
+  careerProfile       CareerProfile?
+  settings            UserSettings?
+  notifications       Notification[]
+  chats               Chat[]
+  jobs                Job[]
+  applications        Application[]
+  automations         Automation[]
+  resumes             Resume[]
+  coverLetterTemplates CoverLetterTemplate[]
+  connectedAccounts   ConnectedAccount[]
+  searchFilters       SearchFilter[]
+  emailRecords        EmailRecord[]
+  interviewRecords    InterviewRecord[]
+  analyticsSnapshots  AnalyticsSnapshot[]
+  notificationPrefs   NotificationPreference[]
+  auditLogs           AuditLog[]     @relation("UserAuditLogs")
+  performedLogs       AuditLog[]     @relation("ActorAuditLogs")
 
   @@index([email])
   @@index([supabaseId])
@@ -77,7 +203,7 @@ model User {
 }
 
 // -----------------------------------------------------------------------------
-// Profile — Extended user information
+// Profile — Basic user display info
 // -----------------------------------------------------------------------------
 
 model Profile {
@@ -106,6 +232,496 @@ model Profile {
 }
 
 // -----------------------------------------------------------------------------
+// CareerProfile — Comprehensive career & job-hunting preferences
+// -----------------------------------------------------------------------------
+
+model CareerProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Professional info
+  currentJobTitle     String?
+  yearsOfExperience   Int?
+  skills              String[]
+  primaryTechnologies String[]
+  education           Json?       // Array of { degree, institution, year, field }
+  certifications      Json?       // Array of { name, issuer, year, url }
+  languages           Json?       // Array of { language, proficiency }
+  portfolioLinks      Json?       // Array of URLs
+
+  // Job preferences
+  preferredJobTitles  String[]
+  preferredCountries  String[]
+  preferredCities     String[]
+  preferredIndustries String[]
+  salaryMin           Int?
+  salaryMax           Int?
+  salaryCurrency      String?     @default("USD")
+  workAuthorization   WorkAuthorizationType?
+  locationPreference  JobLocationType?
+  willingToRelocate   Boolean     @default(false)
+  visaSponsorshipNeeded Boolean   @default(false)
+
+  // Automation preferences
+  maxDailyApplications Int?      @default(10)
+  autoApplyEnabled     Boolean   @default(false)
+  approvalRequired     Boolean   @default(true)
+  searchInterval       Int?      @default(30) // minutes
+
+  // Summary for AI context
+  aiSummary           String?    @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("career_profiles")
+}
+
+// -----------------------------------------------------------------------------
+// Resume — User resumes with AI analysis
+// -----------------------------------------------------------------------------
+
+model Resume {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title       String
+  fileName    String?
+  fileUrl     String?
+  content     String    @db.Text   // Parsed text content
+  parsedData  Json?                // Structured parsed resume data
+  atsScore    Int?                 // 0-100 ATS compatibility score
+  atsAnalysis Json?                // Detailed ATS analysis
+  isDefault   Boolean   @default(false)
+
+  applications Application[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("resumes")
+}
+
+// -----------------------------------------------------------------------------
+// CoverLetterTemplate — Reusable cover letter templates
+// -----------------------------------------------------------------------------
+
+model CoverLetterTemplate {
+  id      String @id @default(uuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title     String
+  content   String  @db.Text
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("cover_letter_templates")
+}
+
+// -----------------------------------------------------------------------------
+// ConnectedAccount — OAuth connections to external platforms
+// -----------------------------------------------------------------------------
+
+model ConnectedAccount {
+  id     String               @id @default(uuid())
+  userId String
+  user   User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  platform      ConnectedAccountType
+  platformUserId String?
+  accessToken   String?       @db.Text // Encrypted
+  refreshToken  String?       @db.Text // Encrypted
+  tokenExpiry   DateTime?
+  scope         String?
+  isActive      Boolean       @default(true)
+  lastSyncAt    DateTime?
+  metadata      Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, platform])
+  @@index([userId])
+  @@map("connected_accounts")
+}
+
+// -----------------------------------------------------------------------------
+// Job — Job postings found by the system
+// -----------------------------------------------------------------------------
+
+model Job {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Core info
+  title       String
+  company     String
+  companyLogo String?
+  companySize String?
+  url         String?
+  description String?   @db.Text
+  status      JobStatus @default(FOUND)
+
+  // Details
+  salaryMin     Int?
+  salaryMax     Int?
+  salaryCurrency String?  @default("USD")
+  salaryPeriod  String?   @default("yearly")
+  location      String?
+  locationType  JobLocationType?
+  experienceLevel String?
+  technologies  String[]
+  requirements  String[]
+  benefits      String[]
+  visaSponsorship Boolean? @default(false)
+
+  // Source & tracking
+  source        JobSource @default(MANUAL)
+  externalId    String?   // ID on the source platform
+  postedAt      DateTime?
+  expiresAt     DateTime?
+
+  // AI analysis
+  matchScore    Int?      // 0-100
+  matchAnalysis Json?     // { skillMatches, skillGaps, experienceMatch, salaryMatch, explanation }
+  aiNotes       String?   @db.Text
+
+  // Application
+  application   Application?
+
+  appliedAt     DateTime?
+  savedAt       DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([userId, externalId, source])
+  @@index([userId, status])
+  @@index([userId, matchScore])
+  @@index([source])
+  @@index([createdAt])
+  @@map("jobs")
+}
+
+// -----------------------------------------------------------------------------
+// Application — Full application lifecycle tracking
+// -----------------------------------------------------------------------------
+
+model Application {
+  id      String @id @default(uuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  jobId   String @unique
+  job     Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  resumeId  String?
+  resume    Resume?  @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+
+  status          JobStatus         @default(APPLIED)
+  method          ApplicationMethod @default(MANUAL)
+  coverLetter     String?           @db.Text
+  tailoredResume  String?           @db.Text  // AI-optimized resume text
+  answers         Json?                        // Q&A responses
+  notes           String?           @db.Text
+
+  submittedAt     DateTime?
+  respondedAt     DateTime?
+
+  // History
+  statusHistory   ApplicationStatusHistory[]
+  interviews      InterviewRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([createdAt])
+  @@map("applications")
+}
+
+// -----------------------------------------------------------------------------
+// ApplicationStatusHistory — Track every status change
+// -----------------------------------------------------------------------------
+
+model ApplicationStatusHistory {
+  id            String    @id @default(uuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  fromStatus  JobStatus?
+  toStatus    JobStatus
+  note        String?
+  source      String?    // "ai", "user", "email"
+
+  createdAt   DateTime   @default(now())
+
+  @@index([applicationId])
+  @@index([createdAt])
+  @@map("application_status_history")
+}
+
+// -----------------------------------------------------------------------------
+// InterviewRecord — Interview scheduling and preparation
+// -----------------------------------------------------------------------------
+
+model InterviewRecord {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  // Scheduling
+  scheduledAt     DateTime?
+  duration        Int?          // minutes
+  timezone        String?
+  format          InterviewFormat?
+  meetingLink     String?
+  location        String?
+  stage           String?       // "Phone Screen", "Technical Round 1", etc.
+
+  // Interviewer info
+  interviewerName  String?
+  interviewerTitle String?
+  interviewerEmail String?
+
+  // AI Preparation
+  prepReport       Json?    // Full interview prep report
+  mockQuestions     Json?    // Generated mock questions with answers
+  companyResearch   Json?    // Company background, news, culture
+  technicalTopics   Json?    // Likely technical topics
+  suggestedQuestions Json?   // Questions to ask interviewer
+
+  // Results
+  feedback         String?  @db.Text
+  outcome          String?  // "passed", "failed", "pending"
+  nextSteps        String?
+
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([applicationId])
+  @@index([scheduledAt])
+  @@map("interview_records")
+}
+
+// -----------------------------------------------------------------------------
+// EmailRecord — Monitored emails from connected accounts
+// -----------------------------------------------------------------------------
+
+model EmailRecord {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  externalId    String?     // Email provider's message ID
+  from          String
+  subject       String
+  body          String?     @db.Text
+  receivedAt    DateTime
+  category      EmailCategory @default(GENERAL)
+  priority      String?     // "high", "medium", "low"
+
+  // AI analysis
+  aiSummary     String?     @db.Text
+  actionRequired String?
+  deadline      DateTime?
+  relatedJobId  String?
+  isProcessed   Boolean     @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, externalId])
+  @@index([userId, category])
+  @@index([receivedAt])
+  @@map("email_records")
+}
+
+// -----------------------------------------------------------------------------
+// SearchFilter — Saved job search filter presets
+// -----------------------------------------------------------------------------
+
+model SearchFilter {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name          String
+  keywords      String[]
+  titles        String[]
+  locations     String[]
+  locationType  JobLocationType?
+  salaryMin     Int?
+  salaryMax     Int?
+  experienceLevel String?
+  technologies  String[]
+  companySize   String?
+  sources       JobSource[]
+  visaSponsorship Boolean?
+  postingAge    Int?          // Max days old
+  isActive      Boolean       @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("search_filters")
+}
+
+// -----------------------------------------------------------------------------
+// Automation — Job search automation configuration
+// -----------------------------------------------------------------------------
+
+model Automation {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  keywords    String[]
+  locations   String[]
+  technologies String[]
+  sources     JobSource[]
+  locationType JobLocationType?
+  salaryMin   Int?
+  salaryMax   Int?
+
+  status      AutomationStatus @default(IDLE)
+  isActive    Boolean   @default(false)
+  autoApply   Boolean   @default(false)
+  approvalRequired Boolean @default(true)
+  intervalMinutes  Int    @default(30)
+  maxDailyApps     Int    @default(10)
+
+  // Stats
+  totalJobsFound   Int    @default(0)
+  totalApplied     Int    @default(0)
+  lastRunAt        DateTime?
+  nextRunAt        DateTime?
+
+  // Logs
+  logs        AutomationLog[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([isActive])
+  @@map("automations")
+}
+
+// -----------------------------------------------------------------------------
+// AutomationLog — Execution logs for automation runs
+// -----------------------------------------------------------------------------
+
+model AutomationLog {
+  id            String    @id @default(uuid())
+  automationId  String
+  automation    Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  action        String    // "search", "match", "apply", "error"
+  details       String?   @db.Text
+  jobsFound     Int?
+  jobsMatched   Int?
+  jobsApplied   Int?
+  errors        Json?
+  duration      Int?      // milliseconds
+
+  createdAt     DateTime  @default(now())
+
+  @@index([automationId])
+  @@index([createdAt])
+  @@map("automation_logs")
+}
+
+// -----------------------------------------------------------------------------
+// NotificationPreference — Per-channel notification settings
+// -----------------------------------------------------------------------------
+
+model NotificationPreference {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  channel       NotificationChannel
+  isEnabled     Boolean @default(true)
+  
+  // Channel-specific config
+  telegramChatId String?
+  whatsappNumber String?
+  emailAddress   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, channel])
+  @@map("notification_preferences")
+}
+
+// -----------------------------------------------------------------------------
+// Notification — User notifications
+// -----------------------------------------------------------------------------
+
+model Notification {
+  id     String           @id @default(uuid())
+  userId String
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title   String
+  message String
+  type    NotificationType @default(INFO)
+  isRead  Boolean          @default(false)
+  readAt  DateTime?
+  link    String?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// -----------------------------------------------------------------------------
+// AnalyticsSnapshot — Daily aggregated metrics for charts
+// -----------------------------------------------------------------------------
+
+model AnalyticsSnapshot {
+  id     String   @id @default(uuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date           DateTime @db.Date
+  jobsFound      Int      @default(0)
+  jobsApplied    Int      @default(0)
+  responses      Int      @default(0)
+  interviews     Int      @default(0)
+  assessments    Int      @default(0)
+  offers         Int      @default(0)
+  rejections     Int      @default(0)
+  avgMatchScore  Float?
+  topSkills      String[]
+  topSources     String[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("analytics_snapshots")
+}
+
+// -----------------------------------------------------------------------------
 // UserSettings — User preferences and configuration
 // -----------------------------------------------------------------------------
 
@@ -125,29 +741,6 @@ model UserSettings {
   updatedAt DateTime @updatedAt
 
   @@map("user_settings")
-}
-
-// -----------------------------------------------------------------------------
-// Notification — User notifications
-// -----------------------------------------------------------------------------
-
-model Notification {
-  id     String           @id @default(uuid())
-  userId String
-  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  title   String
-  message String
-  type    NotificationType @default(INFO)
-  isRead  Boolean          @default(false)
-  readAt  DateTime?
-  link    String?
-
-  createdAt DateTime @default(now())
-
-  @@index([userId, isRead])
-  @@index([createdAt])
-  @@map("notifications")
 }
 
 // -----------------------------------------------------------------------------
@@ -181,14 +774,8 @@ model AuditLog {
 }
 
 // -----------------------------------------------------------------------------
-// Chat & AI Integration
+// Chat & AI Code Builder (Coexisting feature)
 // -----------------------------------------------------------------------------
-
-enum MessageRole {
-  USER
-  ASSISTANT
-  SYSTEM
-}
 
 model Chat {
   id        String   @id @default(uuid())
@@ -221,74 +808,4 @@ model Message {
   @@index([chatId])
   @@index([createdAt])
   @@map("messages")
-}
-
-// -----------------------------------------------------------------------------
-// Autonomous Job Application System
-// -----------------------------------------------------------------------------
-
-enum JobStatus {
-  FOUND
-  APPLIED
-  REJECTED
-  INTERVIEWING
-  OFFER
-}
-
-model Job {
-  id          String    @id @default(uuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  company     String
-  role        String
-  url         String?
-  description String?   @db.Text
-  status      JobStatus @default(FOUND)
-  
-  matchScore  Int?
-  coverLetter String?   @db.Text
-  
-  appliedAt   DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([userId, status])
-  @@map("jobs")
-}
-
-model Automation {
-  id          String    @id @default(uuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  name        String
-  keywords    String[]  
-  locations   String[]
-  
-  isActive    Boolean   @default(false)
-  autoApply   Boolean   @default(false)
-  
-  lastRunAt   DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([userId])
-  @@map("automations")
-}
-
-model Resume {
-  id          String    @id @default(uuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  title       String
-  content     String    @db.Text
-  isDefault   Boolean   @default(false)
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([userId])
-  @@map("resumes")
 }
