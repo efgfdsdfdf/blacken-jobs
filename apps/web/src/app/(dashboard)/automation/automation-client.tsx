@@ -81,12 +81,19 @@ export function AutomationClient({ initialIsActive, initialPortfolioUrl }: Props
 
   const handleForceRun = async () => {
     toast.info("Triggering Agent...", { description: "The agent is waking up and scanning for jobs." });
-    const success = await forceRunJobWorker();
-    if (success) {
-      toast.success("Agent Run Complete!", { description: "Open the Logs to see the magic happen."});
+    const res = await forceRunJobWorker();
+    if (res.success) {
+      if (res.message) {
+        toast.info("Agent Scan Complete", { description: res.message });
+      } else {
+        toast.success("Agent Run Complete!", { description: "Open the Logs to see the magic happen."});
+      }
       if (isLogsOpen) fetchLogs();
     } else {
-      toast.error("Failed to trigger agent.");
+      toast.error("Cannot Run Agent", {
+        description: res.error || "Failed to trigger agent.",
+        duration: 8000
+      });
     }
   }
 

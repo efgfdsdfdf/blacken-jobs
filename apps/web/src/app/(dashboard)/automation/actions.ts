@@ -50,6 +50,31 @@ export async function forceRunJobWorker() {
   const user = await requireAuth()
   
   try {
+    // Check prerequisites
+    const careerProfile = await prisma.careerProfile.findUnique({
+      where: { userId: user.id }
+    })
+    const defaultResume = await prisma.resume.findFirst({
+      where: { userId: user.id, isDefault: true }
+    })
+
+    const missing = []
+    if (!careerProfile) {
+      missing.push("Career Profile details")
+    } else if (careerProfile.skills.length === 0) {
+      missing.push("Skills in your Career Profile")
+    }
+    if (!defaultResume) {
+      missing.push("A default Resume (mark one as default under Resumes)")
+    }
+
+    if (missing.length > 0) {
+      return {
+        success: false,
+        error: "Prerequisites missing: " + missing.join(", ")
+      }
+    }
+
     let automation = await prisma.automation.findFirst({
       where: { userId: user.id }
     })
@@ -98,7 +123,7 @@ export async function forceRunJobWorker() {
       await prisma.auditLog.create({
         data: { actorId: user.id, action: "UPDATE", entity: "Agent Run", metadata: { message: "No new matching jobs found on the live web." } }
       })
-      return false
+      return { success: true, message: "No new matching jobs found." }
     }
 
     await prisma.auditLog.create({
@@ -201,10 +226,10 @@ export async function forceRunJobWorker() {
       data: { actorId: user.id, action: "UPDATE", entity: "Agent Run", metadata: { message: "Agent run completed successfully." } }
     })
 
-    return true
+    return { success: true }
   } catch (error) {
     console.error("Failed to trigger job worker", error)
-    return false
+    return { success: false, error: "Failed to run worker" }
   }
 }
 
