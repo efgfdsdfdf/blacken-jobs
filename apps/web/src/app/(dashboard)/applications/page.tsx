@@ -19,7 +19,7 @@ export default async function Page() {
       job: true,
     },
     orderBy: {
-      appliedAt: "desc",
+      createdAt: "desc",
     },
   })
 
