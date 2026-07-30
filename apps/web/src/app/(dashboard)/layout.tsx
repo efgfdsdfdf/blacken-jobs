@@ -17,6 +17,16 @@ export default async function DashboardLayout({
 
   const profile = await getUserProfile(user.id)
 
+  const flattenedUser = profile ? {
+    id: profile.id,
+    email: profile.email,
+    role: profile.role,
+    isEmailVerified: profile.isEmailVerified,
+    createdAt: profile.createdAt,
+    ...profile.profile,
+    settings: profile.settings
+  } : null
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background bg-grid-white/[0.02] relative">
       {/* Subtle glowing ambient background */}
@@ -24,12 +34,12 @@ export default async function DashboardLayout({
       
       {/* Desktop Sidebar with glassmorphism */}
       <div className="hidden border-r border-white/5 bg-background/40 backdrop-blur-md md:block relative z-10 shadow-2xl">
-        <Sidebar user={profile} />
+        <Sidebar user={flattenedUser} />
       </div>
       
       <div className="flex flex-1 flex-col overflow-hidden relative z-10 glass-panel border-white/5 rounded-none md:rounded-l-2xl m-0 md:m-2 md:mr-0 md:border-l shadow-2xl">
         <div className="bg-background/40 backdrop-blur-md border-b border-white/5">
-          <Header user={profile} />
+          <Header user={flattenedUser} />
         </div>
         <main className="flex-1 overflow-y-auto p-0 md:p-6 lg:p-8">
           {children}
