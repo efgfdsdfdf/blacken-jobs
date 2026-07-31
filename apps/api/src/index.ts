@@ -26,8 +26,11 @@ async function bootstrap() {
       logger.info(`🚀 API server listening on port ${port} in ${env.NODE_ENV} mode`);
     });
 
-  } catch (error) {
-    logger.error('❌ Failed to start server', { error });
+  } catch (error: any) {
+    logger.error('❌ Failed to start server', { 
+      message: error?.message || String(error), 
+      stack: error?.stack 
+    });
     process.exit(1);
   }
 }
