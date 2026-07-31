@@ -110,14 +110,14 @@ class JobWorkerService {
           }).catch(() => {});
         }
       }
-    } catch (indeedError) {
+    } catch (indeedError: any) {
       logger.error("Error during Indeed crawling phase:", indeedError);
       await prisma.auditLog.create({
         data: {
           actorId: automation.userId,
           action: "UPDATE",
           entity: "Agent Run",
-          metadata: { message: `⚠️ Indeed Crawler error: Could not complete login or search.` }
+          metadata: { message: `⚠️ Indeed Crawler error: ${indeedError.message || indeedError.toString()}` }
         }
       }).catch(() => {});
     }
