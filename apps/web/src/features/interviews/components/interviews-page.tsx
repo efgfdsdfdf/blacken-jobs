@@ -106,27 +106,65 @@ export function InterviewsPage({ interviews }: { interviews: Interview[] }) {
           </button>
         )}
         
-        <button className="flex items-center gap-4 p-5 rounded-xl border border-white/5 bg-zinc-900/40 backdrop-blur-md hover:bg-white/[0.03] transition-all group">
-          <div className="rounded-xl p-3 bg-blue-500/10 text-blue-400 group-hover:scale-110 transition-transform">
-            <BookOpen className="h-5 w-5" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-semibold text-zinc-200">Prep Materials</p>
-            <p className="text-xs text-zinc-500">Review company research & tips</p>
-          </div>
-          <ChevronRight className="h-4 w-4 text-zinc-600 ml-auto" />
-        </button>
+        {interviews.length > 0 ? (
+          <Link 
+            href={`/interviews/${interviews[0].id}/prep?tab=research`}
+            className="flex items-center gap-4 p-5 rounded-xl border border-white/5 bg-zinc-900/40 backdrop-blur-md hover:bg-white/[0.03] transition-all group cursor-pointer"
+          >
+            <div className="rounded-xl p-3 bg-blue-500/10 text-blue-400 group-hover:scale-110 transition-transform">
+              <BookOpen className="h-5 w-5" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-zinc-200">Prep Materials</p>
+              <p className="text-xs text-zinc-500">Review company research & tips</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-zinc-600 ml-auto" />
+          </Link>
+        ) : (
+          <button 
+            onClick={() => toast.info("Please schedule an interview for one of your job applications first to view prep materials!")}
+            className="flex items-center gap-4 p-5 rounded-xl border border-white/5 bg-zinc-900/40 backdrop-blur-md hover:bg-white/[0.03] transition-all group cursor-pointer text-left w-full"
+          >
+            <div className="rounded-xl p-3 bg-blue-500/10 text-blue-400 group-hover:scale-110 transition-transform">
+              <BookOpen className="h-5 w-5" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-zinc-200">Prep Materials</p>
+              <p className="text-xs text-zinc-500">Review company research & tips</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-zinc-600 ml-auto" />
+          </button>
+        )}
         
-        <button className="flex items-center gap-4 p-5 rounded-xl border border-white/5 bg-zinc-900/40 backdrop-blur-md hover:bg-white/[0.03] transition-all group">
-          <div className="rounded-xl p-3 bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition-transform">
-            <MessageSquare className="h-5 w-5" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-semibold text-zinc-200">Questions to Ask</p>
-            <p className="text-xs text-zinc-500">Smart questions for your interviewers</p>
-          </div>
-          <ChevronRight className="h-4 w-4 text-zinc-600 ml-auto" />
-        </button>
+        {interviews.length > 0 ? (
+          <Link 
+            href={`/interviews/${interviews[0].id}/prep?tab=questions`}
+            className="flex items-center gap-4 p-5 rounded-xl border border-white/5 bg-zinc-900/40 backdrop-blur-md hover:bg-white/[0.03] transition-all group cursor-pointer"
+          >
+            <div className="rounded-xl p-3 bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition-transform">
+              <MessageSquare className="h-5 w-5" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-zinc-200">Questions to Ask</p>
+              <p className="text-xs text-zinc-500">Smart questions for your interviewers</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-zinc-600 ml-auto" />
+          </Link>
+        ) : (
+          <button 
+            onClick={() => toast.info("Please schedule an interview for one of your job applications first to view suggested questions!")}
+            className="flex items-center gap-4 p-5 rounded-xl border border-white/5 bg-zinc-900/40 backdrop-blur-md hover:bg-white/[0.03] transition-all group cursor-pointer text-left w-full"
+          >
+            <div className="rounded-xl p-3 bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition-transform">
+              <MessageSquare className="h-5 w-5" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-zinc-200">Questions to Ask</p>
+              <p className="text-xs text-zinc-500">Smart questions for your interviewers</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-zinc-600 ml-auto" />
+          </button>
+        )}
       </div>
 
       {/* Upcoming Interviews */}
