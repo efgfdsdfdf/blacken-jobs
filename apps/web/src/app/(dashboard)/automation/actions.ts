@@ -207,3 +207,28 @@ export async function updateTargetPreferences(titles: string[], locations: strin
     })
   }
 }
+
+export async function fetchNotifications() {
+  const user = await requireAuth()
+  return await prisma.notification.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+    take: 15
+  })
+}
+
+export async function markNotificationAsRead(id: string) {
+  const user = await requireAuth()
+  await prisma.notification.updateMany({
+    where: { id, userId: user.id },
+    data: { isRead: true, readAt: new Date() }
+  })
+}
+
+export async function markAllNotificationsAsRead() {
+  const user = await requireAuth()
+  await prisma.notification.updateMany({
+    where: { userId: user.id, isRead: false },
+    data: { isRead: true, readAt: new Date() }
+  })
+}

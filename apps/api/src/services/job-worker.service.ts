@@ -210,6 +210,19 @@ Does this job match the candidate's target job title, core skills, or profile? R
       }
 
       logger.info(`🤖 Job Worker: Saved job: ${job.company} - ${job.title} (Status: ${applyStatus})`);
+
+      // Create a real DB notification for the user
+      await prisma.notification.create({
+        data: {
+          userId: automation.userId,
+          title: applyStatus === "APPLIED" ? "Job Auto-Applied" : "New Job Match Found",
+          message: applyStatus === "APPLIED" 
+            ? `Applied to ${job.title} at ${job.company}. Check applications.` 
+            : `Matched with ${job.title} at ${job.company}. Click to view.`,
+          type: applyStatus === "APPLIED" ? "SUCCESS" : "INFO",
+          link: "/jobs"
+        }
+      }).catch(err => logger.error("Failed to create database notification:", err));
     }
 
     await prisma.automation.update({

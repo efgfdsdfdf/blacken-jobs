@@ -101,6 +101,17 @@ Only return raw JSON.`
       }
     })
 
+    // Create a real DB notification for the user
+    await prisma.notification.create({
+      data: {
+        userId: session.id,
+        title: "Interview Practice Scored",
+        message: `Practice session for ${interview.application.job.company} scored: ${evaluation.overallScore}%. Feedback sent to email!`,
+        type: "SUCCESS",
+        link: `/interviews/${id}/prep`
+      }
+    }).catch(err => console.error("Failed to create database notification:", err))
+
     // Send feedback email using Resend
     if (process.env.RESEND_API_KEY && session.email) {
       try {
