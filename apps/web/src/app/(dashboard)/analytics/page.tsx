@@ -93,35 +93,37 @@ export default async function Page() {
   ]
 
   // Group and count actual job sources by parsing domain names from URLs
-  const sourcesMap: Record<string, number> = {}
-  jobs.forEach(j => {
-    if (!j.url) return
-    let sourceName = "Direct / Other"
-    const url = j.url.toLowerCase()
-    if (url.includes("indeed.com")) sourceName = "Indeed"
-    else if (url.includes("remoteok.com") || url.includes("remoteok")) sourceName = "RemoteOK"
-    else if (url.includes("remotive.com") || url.includes("remotive")) sourceName = "Remotive"
-    else if (url.includes("linkedin.com")) sourceName = "LinkedIn"
-    
-    sourcesMap[sourceName] = (sourcesMap[sourceName] || 0) + 1
-  })
-
-  const sourcesColors: Record<string, string> = {
-    "Indeed": "#2164f4",
-    "RemoteOK": "#ff4747",
-    "Remotive": "#6366f1",
-    "LinkedIn": "#0077b5",
-    "Direct / Other": "#71717a"
+  const sourcesMap: Record<string, number> = {
+    "Indeed": 0,
+    "LinkedIn": 0,
+    "Remotive": 0,
+    "Direct / Other": 0
   }
 
-  const sources = Object.entries(sourcesMap).map(([name, value]) => ({
-    name,
-    value,
-    color: sourcesColors[name] || "#3b82f6"
-  }))
+  jobs.forEach(j => {
+    if (!j.url) {
+      sourcesMap["Direct / Other"] += 1
+      return
+    }
+    const url = j.url.toLowerCase()
+    if (url.includes("indeed.com")) sourcesMap["Indeed"] += 1
+    else if (url.includes("linkedin.com")) sourcesMap["LinkedIn"] += 1
+    else if (url.includes("remotive.com") || url.includes("remotive") || url.includes("remoteok")) sourcesMap["Remotive"] += 1
+    else sourcesMap["Direct / Other"] += 1
+  })
 
-  const finalSources = sources.length > 0 ? sources : [
-    { name: "No Data", value: 0, color: "#71717a" }
+  // Convert to percentages and ensure exactly 4 items for the conic-gradient UI
+  const totalJobs = totalJobsFound
+  const finalSources = totalJobs > 0 ? [
+    { name: "Indeed", value: Math.round((sourcesMap["Indeed"] / totalJobs) * 100), color: "#2164f4" },
+    { name: "LinkedIn", value: Math.round((sourcesMap["LinkedIn"] / totalJobs) * 100), color: "#0077b5" },
+    { name: "Remotive", value: Math.round((sourcesMap["Remotive"] / totalJobs) * 100), color: "#6366f1" },
+    { name: "Direct / Other", value: 100 - (Math.round((sourcesMap["Indeed"] / totalJobs) * 100) + Math.round((sourcesMap["LinkedIn"] / totalJobs) * 100) + Math.round((sourcesMap["Remotive"] / totalJobs) * 100)), color: "#71717a" },
+  ] : [
+    { name: "Indeed", value: 0, color: "#2164f4" },
+    { name: "LinkedIn", value: 0, color: "#0077b5" },
+    { name: "Remotive", value: 0, color: "#6366f1" },
+    { name: "Direct / Other", value: 100, color: "#71717a" },
   ]
 
   const analyticsData = {
