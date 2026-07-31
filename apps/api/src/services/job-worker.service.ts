@@ -9,6 +9,8 @@ class JobWorkerService {
   private intervalId: NodeJS.Timeout | null = null;
   private readonly INTERVAL_MS = 1000 * 60 * 30; // 30 minutes
 
+  private isProcessing: boolean = false;
+
   constructor() {
     setTimeout(() => this.start(), 5000);
   }
@@ -37,6 +39,12 @@ class JobWorkerService {
   }
 
   private async runCycle(forceAll = false) {
+    if (this.isProcessing) {
+      logger.warn("🤖 Job Worker: Cycle run skipped because another cycle is already processing.");
+      return;
+    }
+
+    this.isProcessing = true;
     try {
       logger.info("🤖 Job Worker: Scanning for automations...");
       
@@ -56,6 +64,8 @@ class JobWorkerService {
 
     } catch (error) {
       logger.error("Error in Job Worker cycle:", error);
+    } finally {
+      this.isProcessing = false;
     }
   }
 
