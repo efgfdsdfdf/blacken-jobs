@@ -34,9 +34,27 @@ export class BrowserService {
     
     try {
       const context = await browser.newContext({
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        viewport: { width: 800, height: 600 }
       });
       const page = await context.newPage();
+
+      // Block heavy media and tracking to slash RAM consumption
+      await page.route('**/*', (route) => {
+        const type = route.request().resourceType();
+        const url = route.request().url();
+        if (
+          ['image', 'media', 'font'].includes(type) ||
+          url.includes('google-analytics') ||
+          url.includes('doubleclick') ||
+          url.includes('facebook') ||
+          url.includes('analytics')
+        ) {
+          route.abort();
+        } else {
+          route.continue();
+        }
+      });
 
       // Go to the job URL
       await page.goto(jobUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -203,9 +221,26 @@ export class BrowserService {
     try {
       const context = await browser.newContext({
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        viewport: { width: 1280, height: 800 }
+        viewport: { width: 800, height: 600 }
       });
       const page = await context.newPage();
+
+      // Block heavy media and tracking to slash RAM consumption
+      await page.route('**/*', (route) => {
+        const type = route.request().resourceType();
+        const url = route.request().url();
+        if (
+          ['image', 'media', 'font'].includes(type) ||
+          url.includes('google-analytics') ||
+          url.includes('doubleclick') ||
+          url.includes('facebook') ||
+          url.includes('analytics')
+        ) {
+          route.abort();
+        } else {
+          route.continue();
+        }
+      });
 
       // Step 1: Go to Indeed Login
       await page.goto('https://secure.indeed.com/auth', { waitUntil: 'domcontentloaded', timeout: 30000 });
