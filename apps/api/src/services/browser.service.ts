@@ -48,8 +48,8 @@ export class BrowserService {
       let isSuccess = false;
 
       // Extremely basic mock heuristics for V1
-      if (content.includes('greenhouse.io') || content.includes('application_form')) {
-        logger.info(`🌐 Detected Greenhouse/Lever ATS signature. Attempting form fill...`);
+      if (content.includes('greenhouse.io') || content.includes('application_form') || jobUrl.includes('indeed.com') || content.includes('indeed')) {
+        logger.info(`🌐 Detected Greenhouse/Lever/Indeed ATS signature. Attempting form fill...`);
         isSuccess = await this.fillStandardATS(page, profile, portfolioUrl, coverLetter);
       } else if (content.includes('remoteok')) {
         logger.info(`🌐 Detected RemoteOK Apply link. They usually redirect to email or external ATS.`);
