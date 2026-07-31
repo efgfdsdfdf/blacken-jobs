@@ -62,7 +62,7 @@ class JobWorkerService {
   private async processAutomation(automation: any) {
     logger.info(`🤖 Job Worker: Processing automation '${automation.name}' for user ${automation.userId}`);
     
-    let foundJobs: any[] = [];
+    // --- Phase A: Fetch RemoteOK jobs ---
     try {
       const tags = automation.keywords && automation.keywords.length > 0 
         ? automation.keywords.join(',') 
@@ -74,8 +74,28 @@ class JobWorkerService {
         foundJobs = data.slice(1, 4);
       }
     } catch (error) {
-      logger.error(`Error fetching real jobs for automation ${automation.id}:`, error);
-      return;
+      logger.error(`Error fetching RemoteOK jobs for automation ${automation.id}:`, error);
+    }
+
+    // --- Phase B: Fetch Indeed jobs if credentials exist ---
+    try {
+      const indeedAccount = await prisma.connectedAccount.findFirst({
+        where: { userId: automation.userId, platform: "INDEED" }
+      });
+
+      if (indeedAccount && indeedAccount.platformUserId && indeedAccount.accessToken) {
+        logger.info(`🤖 Job Worker: Found Indeed credentials. Launching Indeed crawler...`);
+        const indeedJobs = await browserService.indeedLoginAndSearch(
+          indeedAccount.platformUserId,
+          indeedAccount.accessToken,
+          automation.keywords && automation.keywords.length > 0 ? automation.keywords[0] : 'software developer'
+        );
+        if (indeedJobs && indeedJobs.length > 0) {
+          foundJobs.push(...indeedJobs);
+        }
+      }
+    } catch (indeedError) {
+      logger.error("Error during Indeed crawling phase:", indeedError);
     }
 
     if (foundJobs.length === 0) {

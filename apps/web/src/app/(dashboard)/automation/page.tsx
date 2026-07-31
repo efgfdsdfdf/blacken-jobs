@@ -15,8 +15,22 @@ export default async function AutomationPage() {
     where: { userId: user.id }
   })
 
+  // Fetch target roles and locations from Career Profile
+  const careerProfile = await prisma.careerProfile.findUnique({
+    where: { userId: user.id }
+  })
+
   const initialIsActive = automation?.isActive ?? false
   const initialPortfolioUrl = profile?.website ?? ""
+  const initialPreferredTitles = careerProfile?.preferredJobTitles ?? []
+  const initialPreferredLocations = careerProfile?.preferredCountries ?? []
 
-  return <AutomationClient initialIsActive={initialIsActive} initialPortfolioUrl={initialPortfolioUrl} />
+  return (
+    <AutomationClient 
+      initialIsActive={initialIsActive} 
+      initialPortfolioUrl={initialPortfolioUrl} 
+      initialPreferredTitles={initialPreferredTitles}
+      initialPreferredLocations={initialPreferredLocations}
+    />
+  )
 }

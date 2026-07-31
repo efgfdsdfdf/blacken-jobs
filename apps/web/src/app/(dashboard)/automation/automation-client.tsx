@@ -11,16 +11,25 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { toggleAutomation, updatePortfolioUrl, forceRunJobWorker, getAgentLogs, saveIndeedCredentials, getIndeedCredentials } from "./actions"
+import { toggleAutomation, updatePortfolioUrl, forceRunJobWorker, getAgentLogs, saveIndeedCredentials, getIndeedCredentials, updateTargetPreferences } from "./actions"
 
 interface Props {
   initialIsActive: boolean;
   initialPortfolioUrl: string;
+  initialPreferredTitles: string[];
+  initialPreferredLocations: string[];
 }
 
-export function AutomationClient({ initialIsActive, initialPortfolioUrl }: Props) {
+export function AutomationClient({ 
+  initialIsActive, 
+  initialPortfolioUrl, 
+  initialPreferredTitles, 
+  initialPreferredLocations 
+}: Props) {
   const [isActive, setIsActive] = React.useState(initialIsActive)
   const [portfolioUrl, setPortfolioUrl] = React.useState(initialPortfolioUrl)
+  const [targetTitles, setTargetTitles] = React.useState(initialPreferredTitles.join(", "))
+  const [targetLocations, setTargetLocations] = React.useState(initialPreferredLocations.join(", "))
   const [isPending, startTransition] = React.useTransition()
   const [logs, setLogs] = React.useState<any[]>([])
   const [isLogsOpen, setIsLogsOpen] = React.useState(false)
@@ -28,6 +37,20 @@ export function AutomationClient({ initialIsActive, initialPortfolioUrl }: Props
   const [indeedEmail, setIndeedEmail] = React.useState("")
   const [indeedPassword, setIndeedPassword] = React.useState("")
   const [savingIndeed, setSavingIndeed] = React.useState(false)
+
+  const handlePreferencesBlur = () => {
+    const titlesArray = targetTitles.split(',').map(t => t.trim()).filter(Boolean)
+    const locationsArray = targetLocations.split(',').map(l => l.trim()).filter(Boolean)
+    
+    startTransition(async () => {
+      try {
+        await updateTargetPreferences(titlesArray, locationsArray)
+        toast.success("Target preferences updated!")
+      } catch (error) {
+        toast.error("Failed to save targeting preferences.")
+      }
+    })
+  }
 
   React.useEffect(() => {
     async function loadCredentials() {
@@ -179,27 +202,40 @@ export function AutomationClient({ initialIsActive, initialPortfolioUrl }: Props
           <CardContent className="space-y-8">
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-3">
-                <Label className="text-zinc-300">Target Roles</Label>
+                <Label className="text-zinc-300">Target Roles (comma-separated)</Label>
                 <div className="flex items-center gap-2 relative">
                   <Briefcase className="w-4 h-4 absolute left-3 text-zinc-500" />
-                  <Input placeholder="e.g. Frontend Developer" defaultValue="Senior React Engineer" className="pl-9 bg-zinc-950/50 border-white/10 focus-visible:border-primary/50 transition-colors" />
+                  <Input 
+                    value={targetTitles}
+                    onChange={(e) => setTargetTitles(e.target.value)}
+                    onBlur={handlePreferencesBlur}
+                    placeholder="e.g. Frontend Developer, React Engineer" 
+                    className="pl-9 bg-zinc-950/50 border-white/10 focus-visible:border-primary/50 transition-colors" 
+                  />
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <Badge variant="secondary" className="bg-zinc-800/80 text-zinc-300 border border-white/5 hover:bg-zinc-700">Frontend</Badge>
-                  <Badge variant="secondary" className="bg-zinc-800/80 text-zinc-300 border border-white/5 hover:bg-zinc-700">React</Badge>
-                  <Badge variant="secondary" className="bg-zinc-800/80 text-zinc-300 border border-white/5 hover:bg-zinc-700">Next.js</Badge>
+                  {targetTitles.split(',').map(t => t.trim()).filter(Boolean).map((t, idx) => (
+                    <Badge key={idx} variant="secondary" className="bg-zinc-800/80 text-zinc-300 border border-white/5 hover:bg-zinc-700">{t}</Badge>
+                  ))}
                 </div>
               </div>
 
               <div className="space-y-3">
-                <Label className="text-zinc-300">Locations</Label>
+                <Label className="text-zinc-300">Locations (comma-separated)</Label>
                 <div className="flex items-center gap-2 relative">
                   <MapPin className="w-4 h-4 absolute left-3 text-zinc-500" />
-                  <Input placeholder="e.g. New York, Remote" defaultValue="Remote, US" className="pl-9 bg-zinc-950/50 border-white/10 focus-visible:border-primary/50 transition-colors" />
+                  <Input 
+                    value={targetLocations}
+                    onChange={(e) => setTargetLocations(e.target.value)}
+                    onBlur={handlePreferencesBlur}
+                    placeholder="e.g. Remote, US, Canada" 
+                    className="pl-9 bg-zinc-950/50 border-white/10 focus-visible:border-primary/50 transition-colors" 
+                  />
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <Badge variant="secondary" className="bg-zinc-800/80 text-zinc-300 border border-white/5 hover:bg-zinc-700">Remote</Badge>
-                  <Badge variant="secondary" className="bg-zinc-800/80 text-zinc-300 border border-white/5 hover:bg-zinc-700">EST Timezone</Badge>
+                  {targetLocations.split(',').map(l => l.trim()).filter(Boolean).map((l, idx) => (
+                    <Badge key={idx} variant="secondary" className="bg-zinc-800/80 text-zinc-300 border border-white/5 hover:bg-zinc-700">{l}</Badge>
+                  ))}
                 </div>
               </div>
 

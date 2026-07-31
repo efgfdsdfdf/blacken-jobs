@@ -307,3 +307,36 @@ export async function getIndeedCredentials() {
     password: account.accessToken || ""
   }
 }
+
+export async function updateTargetPreferences(titles: string[], locations: string[]) {
+  const user = await requireAuth()
+
+  // Update Career Profile
+  await prisma.careerProfile.upsert({
+    where: { userId: user.id },
+    update: {
+      preferredJobTitles: titles,
+      preferredCountries: locations
+    },
+    create: {
+      userId: user.id,
+      preferredJobTitles: titles,
+      preferredCountries: locations
+    }
+  })
+
+  // Update Automation
+  const automation = await prisma.automation.findFirst({
+    where: { userId: user.id }
+  })
+
+  if (automation) {
+    await prisma.automation.update({
+      where: { id: automation.id },
+      data: {
+        keywords: titles,
+        locations: locations
+      }
+    })
+  }
+}

@@ -102,6 +102,99 @@ export class BrowserService {
       return false;
     }
   }
+
+  /**
+   * Logs into Indeed using user credentials, searches for jobs, and returns matching postings.
+   */
+  public async indeedLoginAndSearch(
+    email: string,
+    password: string,
+    keywords: string
+  ): Promise<any[]> {
+    logger.info(`🌐 Indeed Crawler: Initiating Indeed session for ${email}`);
+    const browser = await chromium.launch({ headless: true });
+    
+    try {
+      const context = await browser.newContext({
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        viewport: { width: 1280, height: 800 }
+      });
+      const page = await context.newPage();
+
+      // Step 1: Go to Indeed Login
+      await page.goto('https://secure.indeed.com/auth', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      logger.info('🌐 Indeed Crawler: Login page loaded.');
+
+      // Wait a bit to simulate human interaction
+      await page.waitForTimeout(2000);
+
+      // Fill email
+      const emailField = await page.$('input[type="email"], input[name*="username"], input[id*="email"]');
+      if (emailField) {
+        await emailField.fill(email);
+        await page.keyboard.press('Enter');
+        await page.waitForTimeout(2000);
+      }
+
+      // Fill password
+      const passwordField = await page.$('input[type="password"], input[name*="password"], input[id*="password"]');
+      if (passwordField) {
+        await passwordField.fill(password);
+        await page.keyboard.press('Enter');
+        await page.waitForTimeout(5000);
+      }
+
+      logger.info('🌐 Indeed Crawler: Logged in. Navigating to job search...');
+
+      // Step 2: Search for target role
+      const searchUrl = `https://www.indeed.com/jobs?q=${encodeURIComponent(keywords)}&l=Remote`;
+      await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await page.waitForTimeout(3000);
+
+      // Step 3: Extract jobs
+      logger.info('🌐 Indeed Crawler: Extracting job search results...');
+      
+      const jobCards = await page.$$('.cardOutline');
+      const jobs: any[] = [];
+
+      for (const card of jobCards.slice(0, 3)) { // Fetch top 3 matching jobs
+        try {
+          const titleElement = await card.$('h2.jobTitle span');
+          const title = titleElement ? await titleElement.innerText() : 'Indeed Job';
+
+          const companyElement = await card.$('.companyName, [data-testid="company-name"]');
+          const company = companyElement ? await companyElement.innerText() : 'Indeed Company';
+
+          const linkElement = await card.$('h2.jobTitle a');
+          const relativeLink = linkElement ? await linkElement.getAttribute('href') : '';
+          const url = relativeLink ? `https://www.indeed.com${relativeLink}` : 'https://www.indeed.com';
+
+          const summaryElement = await card.$('.job-snippet');
+          const description = summaryElement ? await summaryElement.innerText() : 'No snippet available';
+
+          jobs.push({
+            position: title,
+            company: company,
+            description: description,
+            url: url,
+            source: 'INDEED'
+          });
+        } catch (e) {
+          logger.error('🌐 Indeed Crawler: Error extracting card:', e);
+        }
+      }
+
+      logger.info(`🌐 Indeed Crawler: Successfully scraped ${jobs.length} jobs.`);
+      return jobs;
+
+    } catch (error) {
+      logger.error('🌐 Indeed Crawler failed:', error);
+      return [];
+    } finally {
+      await browser.close();
+      logger.info('🌐 Indeed Crawler session closed.');
+    }
+  }
 }
 
 export const browserService = new BrowserService();
