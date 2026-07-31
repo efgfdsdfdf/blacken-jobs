@@ -76,16 +76,35 @@ export function InterviewsPage({ interviews }: { interviews: Interview[] }) {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <button className="flex items-center gap-4 p-5 rounded-xl border border-white/5 bg-zinc-900/40 backdrop-blur-md hover:bg-white/[0.03] transition-all group">
-          <div className="rounded-xl p-3 bg-purple-500/10 text-purple-400 group-hover:scale-110 transition-transform">
-            <Brain className="h-5 w-5" />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-semibold text-zinc-200">AI Mock Interview</p>
-            <p className="text-xs text-zinc-500">Practice with AI-generated questions</p>
-          </div>
-          <ChevronRight className="h-4 w-4 text-zinc-600 ml-auto" />
-        </button>
+        {interviews.length > 0 ? (
+          <Link 
+            href={`/interviews/${interviews[0].id}/prep`}
+            className="flex items-center gap-4 p-5 rounded-xl border border-white/5 bg-zinc-900/40 backdrop-blur-md hover:bg-white/[0.03] transition-all group cursor-pointer"
+          >
+            <div className="rounded-xl p-3 bg-purple-500/10 text-purple-400 group-hover:scale-110 transition-transform">
+              <Brain className="h-5 w-5" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-zinc-200">AI Mock Interview</p>
+              <p className="text-xs text-zinc-500">Practice with AI-generated questions</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-zinc-600 ml-auto" />
+          </Link>
+        ) : (
+          <button 
+            onClick={() => toast.info("Please schedule an interview for one of your job applications first to practice!")}
+            className="flex items-center gap-4 p-5 rounded-xl border border-white/5 bg-zinc-900/40 backdrop-blur-md hover:bg-white/[0.03] transition-all group cursor-pointer text-left w-full"
+          >
+            <div className="rounded-xl p-3 bg-purple-500/10 text-purple-400 group-hover:scale-110 transition-transform">
+              <Brain className="h-5 w-5" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-zinc-200">AI Mock Interview</p>
+              <p className="text-xs text-zinc-500">Practice with AI-generated questions</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-zinc-600 ml-auto" />
+          </button>
+        )}
         
         <button className="flex items-center gap-4 p-5 rounded-xl border border-white/5 bg-zinc-900/40 backdrop-blur-md hover:bg-white/[0.03] transition-all group">
           <div className="rounded-xl p-3 bg-blue-500/10 text-blue-400 group-hover:scale-110 transition-transform">
@@ -217,6 +236,14 @@ export function InterviewsPage({ interviews }: { interviews: Interview[] }) {
                     {new Date(interview.scheduledAt).toLocaleDateString()}
                   </span>
                 )}
+                <div className="ml-auto">
+                  <Link href={`/interviews/${interview.id}/prep`}>
+                    <Button size="sm" className="bg-purple-500/20 text-purple-400 border border-purple-500/20 hover:bg-purple-500/30">
+                      <Brain className="h-3.5 w-3.5 mr-1.5" />
+                      Practice
+                    </Button>
+                  </Link>
+                </div>
               </div>
             ))}
           </div>

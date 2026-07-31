@@ -31,6 +31,7 @@ export function MockInterviewSession({
   title: string 
 }) {
   const [loading, setLoading] = React.useState(true)
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null)
   const [evaluating, setEvaluating] = React.useState(false)
   const [questions, setQuestions] = React.useState<string[]>([])
   const [currentStep, setCurrentStep] = React.useState(0) // -1: Intro, 0-N: Questions, N+1: Result
@@ -38,22 +39,31 @@ export function MockInterviewSession({
   const [currentAnswer, setCurrentAnswer] = React.useState("")
   const [result, setResult] = React.useState<any>(null)
 
-  React.useEffect(() => {
-    async function fetchPrep() {
-      try {
-        const res = await fetch(`/api/interviews/${interviewId}/prep`)
-        if (!res.ok) throw new Error("Failed to load prep questions")
-        const data = await res.json()
-        setQuestions(data.mockQuestions || [])
-        setAnswers(new Array(data.mockQuestions?.length || 0).fill(""))
-      } catch (err) {
-        toast.error("Failed to load mock interview questions")
-      } finally {
-        setLoading(false)
+  const fetchPrep = React.useCallback(async () => {
+    try {
+      setErrorMsg(null)
+      const res = await fetch(`/api/interviews/${interviewId}/prep`)
+      if (!res.ok) {
+        const txt = await res.text()
+        throw new Error(txt || "Failed to load prep questions")
       }
+      const data = await res.json()
+      if (!data.mockQuestions || data.mockQuestions.length === 0) {
+        throw new Error("No mock questions found in database. Try retrying to generate them.")
+      }
+      setQuestions(data.mockQuestions || [])
+      setAnswers(new Array(data.mockQuestions?.length || 0).fill(""))
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to load questions")
+      toast.error("Failed to load mock interview questions")
+    } finally {
+      setLoading(false)
     }
-    fetchPrep()
   }, [interviewId])
+
+  React.useEffect(() => {
+    fetchPrep()
+  }, [fetchPrep])
 
   const handleNext = () => {
     const updated = [...answers]
@@ -111,6 +121,21 @@ export function MockInterviewSession({
       <div className="flex h-96 flex-col items-center justify-center gap-4">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
         <p className="text-sm text-zinc-400">Generating customized mock questions with AI...</p>
+      </div>
+    )
+  }
+
+  if (errorMsg) {
+    return (
+      <div className="flex h-96 flex-col items-center justify-center gap-4 text-center p-4">
+        <div className="rounded-full bg-red-500/10 p-3 text-red-500 border border-red-500/20">
+          <XCircle className="h-8 w-8" />
+        </div>
+        <h3 className="text-lg font-bold text-white mt-2">Mock Questions Generation Failed</h3>
+        <p className="text-sm text-zinc-400 max-w-md">{errorMsg}</p>
+        <Button onClick={() => { setLoading(true); fetchPrep(); }} className="mt-2 bg-primary text-white hover:bg-primary/80">
+          Retry Question Generation
+        </Button>
       </div>
     )
   }
