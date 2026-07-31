@@ -14,11 +14,11 @@ export function FunnelChart({ data }: FunnelChartProps) {
   const max = data.found || 1
   
   const stages = [
-    { id: "found", label: "Jobs Found", value: data.found, color: "from-blue-500/20 to-blue-600/5", width: "100%", accent: "bg-blue-500" },
-    { id: "applied", label: "Applied", value: data.applied, color: "from-indigo-500/20 to-indigo-600/5", width: "85%", accent: "bg-indigo-500" },
-    { id: "underReview", label: "Under Review", value: data.underReview, color: "from-yellow-500/20 to-yellow-600/5", width: "70%", accent: "bg-yellow-500" },
-    { id: "interviewing", label: "Interviewing", value: data.interviewing, color: "from-purple-500/20 to-purple-600/5", width: "50%", accent: "bg-purple-500" },
-    { id: "offer", label: "Offers", value: data.offer, color: "from-green-500/20 to-green-600/5", width: "30%", accent: "bg-green-500" },
+    { id: "found", label: "Jobs Found", value: data.found, color: "from-blue-600/40 to-blue-500/10", width: "100%", accent: "bg-blue-500" },
+    { id: "applied", label: "Applied", value: data.applied, color: "from-indigo-600/40 to-indigo-500/10", width: "85%", accent: "bg-indigo-500" },
+    { id: "underReview", label: "Under Review", value: data.underReview, color: "from-yellow-600/40 to-yellow-500/10", width: "70%", accent: "bg-yellow-500" },
+    { id: "interviewing", label: "Interviewing", value: data.interviewing, color: "from-purple-600/40 to-purple-500/10", width: "50%", accent: "bg-purple-500" },
+    { id: "offer", label: "Offers", value: data.offer, color: "from-green-600/40 to-green-500/10", width: "30%", accent: "bg-green-500" },
   ]
 
   return (
@@ -29,23 +29,29 @@ export function FunnelChart({ data }: FunnelChartProps) {
         return (
           <div key={stage.id} className="w-full flex justify-center group relative">
             <div 
-              className={`h-14 md:h-16 rounded-xl bg-gradient-to-r ${stage.color} border border-white/5 flex items-center justify-between px-4 sm:px-6 transition-all duration-300 group-hover:scale-[1.02] group-hover:border-white/10 group-hover:shadow-lg relative overflow-hidden`}
+              className="h-14 md:h-16 rounded-xl bg-zinc-900/60 border border-white/5 flex items-center justify-between px-4 sm:px-6 transition-all duration-300 group-hover:scale-[1.02] group-hover:border-white/10 group-hover:shadow-lg relative overflow-hidden"
               style={{ width: stage.width }}
             >
-              <div className={`absolute left-0 top-0 bottom-0 w-1 ${stage.accent} opacity-50`} />
+              {/* Colored progress bar fill to see progress clearly on mobile */}
+              <div 
+                className={`absolute inset-y-0 left-0 bg-gradient-to-r ${stage.color} opacity-80 transition-all duration-500`}
+                style={{ width: `${percentage}%` }}
+              />
               
-              <div className="flex items-center gap-3">
+              <div className={`absolute left-0 top-0 bottom-0 w-1 ${stage.accent} opacity-90`} />
+              
+              <div className="flex items-center gap-3 relative z-10">
                 <div className={`w-2 h-2 rounded-full ${stage.accent} shadow-[0_0_8px_currentColor]`} />
-                <span className="font-medium text-sm sm:text-base text-foreground/90">
+                <span className="font-semibold text-xs sm:text-sm text-zinc-200">
                   {stage.label}
                 </span>
               </div>
               
-              <div className="flex items-center gap-3 sm:gap-6">
-                <span className="text-xs bg-background/50 px-2 py-1 rounded-md text-muted-foreground border border-white/5 hidden sm:block">
+              <div className="flex items-center gap-3 sm:gap-6 relative z-10">
+                <span className="text-[10px] bg-black/60 px-1.5 py-0.5 rounded text-zinc-400 border border-white/5">
                   {percentage}%
                 </span>
-                <span className="font-bold text-lg sm:text-xl text-white">{stage.value}</span>
+                <span className="font-bold text-base sm:text-lg text-white">{stage.value}</span>
               </div>
             </div>
             
