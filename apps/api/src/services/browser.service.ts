@@ -18,8 +18,19 @@ export class BrowserService {
   ): Promise<boolean> {
     logger.info(`🌐 Launching Headless Browser for URL: ${jobUrl}`);
     
-    // Launch browser (headless by default, but we can turn headless: false for debugging if needed)
-    const browser = await chromium.launch({ headless: true });
+    // Launch browser (headless by default)
+    const browser = await chromium.launch({
+      headless: true,
+      args: [
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
+        '--disable-setuid-sandbox',
+        '--no-sandbox',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process'
+      ]
+    });
     
     try {
       const context = await browser.newContext({
@@ -112,7 +123,18 @@ export class BrowserService {
     keywords: string
   ): Promise<any[]> {
     logger.info(`🌐 Indeed Crawler: Initiating Indeed session for ${email}`);
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch({
+      headless: true,
+      args: [
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
+        '--disable-setuid-sandbox',
+        '--no-sandbox',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process'
+      ]
+    });
     
     try {
       const context = await browser.newContext({
