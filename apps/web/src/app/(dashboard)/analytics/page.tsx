@@ -115,15 +115,15 @@ export default async function Page() {
   // Convert to percentages and ensure exactly 4 items for the conic-gradient UI
   const totalJobs = totalJobsFound
   const finalSources = totalJobs > 0 ? [
-    { name: "Indeed", value: Math.round((sourcesMap["Indeed"] / totalJobs) * 100), color: "#2164f4" },
-    { name: "LinkedIn", value: Math.round((sourcesMap["LinkedIn"] / totalJobs) * 100), color: "#0077b5" },
-    { name: "Remotive", value: Math.round((sourcesMap["Remotive"] / totalJobs) * 100), color: "#6366f1" },
-    { name: "Direct / Other", value: 100 - (Math.round((sourcesMap["Indeed"] / totalJobs) * 100) + Math.round((sourcesMap["LinkedIn"] / totalJobs) * 100) + Math.round((sourcesMap["Remotive"] / totalJobs) * 100)), color: "#71717a" },
+    { name: "Indeed", count: sourcesMap["Indeed"], value: Math.round((sourcesMap["Indeed"] / totalJobs) * 100), color: "#2164f4" },
+    { name: "LinkedIn", count: sourcesMap["LinkedIn"], value: Math.round((sourcesMap["LinkedIn"] / totalJobs) * 100), color: "#0077b5" },
+    { name: "Remotive", count: sourcesMap["Remotive"], value: Math.round((sourcesMap["Remotive"] / totalJobs) * 100), color: "#6366f1" },
+    { name: "Direct / Other", count: sourcesMap["Direct / Other"], value: Math.max(0, 100 - (Math.round((sourcesMap["Indeed"] / totalJobs) * 100) + Math.round((sourcesMap["LinkedIn"] / totalJobs) * 100) + Math.round((sourcesMap["Remotive"] / totalJobs) * 100))), color: "#71717a" },
   ] : [
-    { name: "Indeed", value: 0, color: "#2164f4" },
-    { name: "LinkedIn", value: 0, color: "#0077b5" },
-    { name: "Remotive", value: 0, color: "#6366f1" },
-    { name: "Direct / Other", value: 100, color: "#71717a" },
+    { name: "Indeed", count: 0, value: 0, color: "#2164f4" },
+    { name: "LinkedIn", count: 0, value: 0, color: "#0077b5" },
+    { name: "Remotive", count: 0, value: 0, color: "#6366f1" },
+    { name: "Direct / Other", count: 0, value: 100, color: "#71717a" },
   ]
 
   const analyticsData = {

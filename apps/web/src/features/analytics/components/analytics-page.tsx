@@ -125,8 +125,8 @@ export function AnalyticsPage({ data }: { data: any }) {
                 >
                   <div className="absolute inset-0 bg-background/5 rounded-full backdrop-blur-[1px]"></div>
                   <div className="absolute inset-4 bg-zinc-950 rounded-full flex flex-col items-center justify-center shadow-inner">
-                    <span className="text-2xl font-bold">{sources.reduce((a: any, b: any) => a + b.value, 0)}</span>
-                    <span className="text-xs text-muted-foreground">Total</span>
+                    <span className="text-2xl font-bold">{sources.reduce((a: any, b: any) => a + (b.count !== undefined ? b.count : b.value), 0)}</span>
+                    <span className="text-xs text-muted-foreground">Total Jobs</span>
                   </div>
                 </div>
                 
