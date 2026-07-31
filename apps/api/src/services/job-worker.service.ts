@@ -33,20 +33,20 @@ class JobWorkerService {
 
   public forceRun() {
     logger.info("🤖 Manual trigger received. Forcing cycle run...");
-    this.runCycle();
+    this.runCycle(true);
   }
 
-  private async runCycle() {
+  private async runCycle(forceAll = false) {
     try {
-      logger.info("🤖 Job Worker: Scanning for active automations...");
+      logger.info("🤖 Job Worker: Scanning for automations...");
       
       const activeAutomations = await prisma.automation.findMany({
-        where: { isActive: true },
+        where: forceAll ? {} : { isActive: true },
         include: { user: { include: { profile: true } } }
       });
 
       if (activeAutomations.length === 0) {
-        logger.info("🤖 Job Worker: No active automations found. Sleeping.");
+        logger.info("🤖 Job Worker: No automations found. Sleeping.");
         return;
       }
 
