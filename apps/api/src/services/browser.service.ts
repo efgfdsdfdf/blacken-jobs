@@ -44,17 +44,18 @@ export class BrowserService {
 
       // Attempt to identify ATS
       const content = await page.content();
+      const currentUrl = page.url();
       
       let isSuccess = false;
 
-      // Extremely basic mock heuristics for V1
-      if (content.includes('greenhouse.io') || content.includes('application_form') || jobUrl.includes('indeed.com') || content.includes('indeed')) {
-        logger.info(`🌐 Detected Greenhouse/Lever/Indeed ATS signature. Attempting form fill...`);
+      if (currentUrl.includes('indeed.com') || currentUrl.includes('apply.indeed.com') || content.includes('indeed-apply')) {
+        logger.info(`🌐 Detected Indeed Application Flow. Attempting form fill...`);
+        isSuccess = await this.fillIndeedApplyFlow(page, profile, portfolioUrl, coverLetter);
+      } else if (content.includes('greenhouse.io') || content.includes('application_form')) {
+        logger.info(`🌐 Detected Greenhouse/Lever ATS signature. Attempting form fill...`);
         isSuccess = await this.fillStandardATS(page, profile, portfolioUrl, coverLetter);
       } else if (content.includes('remoteok')) {
         logger.info(`🌐 Detected RemoteOK Apply link. They usually redirect to email or external ATS.`);
-        // For RemoteOK, they usually have an 'Apply now' button that opens a mailto or external site.
-        // For this V1, if it's an external site we don't recognize, we fail the auto-apply.
         isSuccess = false;
       } else {
         logger.warn(`🌐 Unrecognized ATS or form structure. Skipping auto-apply.`);
@@ -112,6 +113,69 @@ export class BrowserService {
       logger.error(`🌐 Failed to fill form fields:`, error);
       return false;
     }
+  }
+
+  /**
+   * Automates Indeed's multi-step Easy Apply wizard processes.
+   */
+  private async fillIndeedApplyFlow(
+    page: any,
+    profile: { firstName: string, lastName: string, email: string },
+    portfolioUrl: string,
+    coverLetter: string
+  ): Promise<boolean> {
+    logger.info("🌐 Indeed Apply: Starting multi-step application...");
+    
+    // We try to fill inputs and click 'Continue' up to 8 times (as Indeed forms are multi-step)
+    for (let step = 0; step < 8; step++) {
+      try {
+        await page.waitForTimeout(2000);
+        
+        const url = page.url();
+        logger.info(`🌐 Indeed Apply Step ${step + 1}: Current URL is ${url}`);
+
+        // Check if we reached the final submit page
+        const submitButton = await page.$('button:has-text("Submit"), button:has-text("Submit your application"), button.ia-BasePage-footerFn');
+        const continueButton = await page.$('button:has-text("Continue"), button:has-text("Next"), button.ia-continueButton');
+
+        if (submitButton) {
+          logger.info("🌐 Indeed Apply: Submit button found. Submitting application!");
+          await submitButton.click();
+          await page.waitForTimeout(3000);
+          return true;
+        }
+
+        // If we see text inputs, let's try to fill standard fields
+        const firstNameInput = await page.$('input[name*="firstName"], input[id*="firstName"]');
+        if (firstNameInput) await firstNameInput.fill(profile.firstName);
+
+        const lastNameInput = await page.$('input[name*="lastName"], input[id*="lastName"]');
+        if (lastNameInput) await lastNameInput.fill(profile.lastName);
+
+        const emailInput = await page.$('input[name*="email"], input[type="email"]');
+        if (emailInput) await emailInput.fill(profile.email);
+
+        // Handle cover letter textarea if visible
+        const coverLetterArea = await page.$('textarea[name*="cover"], textarea[id*="cover"], textarea[placeholder*="cover"]');
+        if (coverLetterArea) {
+          await coverLetterArea.fill(coverLetter);
+        }
+
+        // Click continue to go to the next step
+        if (continueButton) {
+          logger.info("🌐 Indeed Apply: Clicking Continue...");
+          await continueButton.click();
+        } else {
+          logger.warn("🌐 Indeed Apply: No continue button found. Might be blocked or completed.");
+          break;
+        }
+      } catch (stepError) {
+        logger.error(`Error filling indeed application step ${step + 1}:`, stepError);
+        break;
+      }
+    }
+    
+    return false;
   }
 
   /**
