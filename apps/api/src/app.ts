@@ -50,6 +50,11 @@ app.use('/api', globalRateLimiter);
 // Specific rate limiters
 app.use('/api/v1/auth', authRateLimiter);
 
+// Root route for base ping safety
+app.get('/', (req, res) => {
+  res.status(200).send("BLACK AI API is running!");
+});
+
 // Mount routes
 app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/auth', authRoutes);
