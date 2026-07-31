@@ -19,6 +19,37 @@ export function JobsPage({ initialJobs }: JobsPageProps) {
   const [sortOption, setSortOption] = useState("Newest");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
+  const [searching, setSearching] = useState(false);
+
+  const handleLiveSearch = async () => {
+    setSearching(true);
+    try {
+      const res = await fetch("/api/jobs/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: searchQuery }),
+      });
+      if (!res.ok) throw new Error("Failed to search live jobs");
+      const matchedJobs = await res.json();
+      
+      if (matchedJobs.length === 0) {
+        toast.info("No matching jobs found on RemoteOK for: " + (searchQuery || "your profile"));
+      } else {
+        // Prepend new jobs to state
+        setJobs(prev => {
+          const existingIds = new Set(prev.map(j => j.id));
+          const newJobs = matchedJobs.filter((j: any) => !existingIds.has(j.id));
+          return [...newJobs, ...prev];
+        });
+        toast.success(`Successfully found ${matchedJobs.length} live jobs matched by AI!`);
+      }
+    } catch (e) {
+      toast.error("Failed to perform live search");
+    } finally {
+      setSearching(false);
+    }
+  };
+
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           job.company.toLowerCase().includes(searchQuery.toLowerCase());
@@ -53,8 +84,12 @@ export function JobsPage({ initialJobs }: JobsPageProps) {
           <h1 className="text-3xl font-bold tracking-tight text-white">Job Search</h1>
           <p className="mt-1 text-sm text-zinc-400">Discover and manage your AI-matched opportunities.</p>
         </div>
-        <Button className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90">
-          <Plus className="h-4 w-4" /> Search New Jobs
+        <Button 
+          onClick={handleLiveSearch} 
+          disabled={searching}
+          className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90"
+        >
+          {searching ? "Searching AI..." : "Search New Jobs"}
         </Button>
       </div>
 
