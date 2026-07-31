@@ -13,6 +13,7 @@ export default async function InterviewPrepPage({
   const session = await requireAuth()
   const { id } = await params
   const { tab } = await searchParams
+  const activeTab = typeof tab === "string" ? tab : "practice"
 
   const interview = await prisma.interviewRecord.findUnique({
     where: { id },
@@ -28,7 +29,7 @@ export default async function InterviewPrepPage({
       interviewId={id} 
       company={interview.application.job.company} 
       title={interview.application.job.title}
-      initialTab={tab || "practice"}
+      initialTab={activeTab}
       companyResearch={interview.companyResearch || ""}
       technicalTopics={interview.technicalTopics || ""}
       suggestedQuestions={interview.suggestedQuestions || ""}
