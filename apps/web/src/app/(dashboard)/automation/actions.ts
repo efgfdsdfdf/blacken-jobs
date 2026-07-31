@@ -25,6 +25,19 @@ export async function toggleAutomation(isActive: boolean) {
       }
     })
   }
+
+  // If activated, trigger a background scan cycle immediately on the Render server
+  if (isActive) {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://blacken-jobs.onrender.com/api/v1"
+      await fetch(`${apiUrl}/automation/trigger`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      })
+    } catch (e) {
+      console.error("Failed to trigger background automation on activation:", e)
+    }
+  }
 }
 
 export async function updatePortfolioUrl(url: string) {

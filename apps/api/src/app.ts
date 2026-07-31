@@ -18,6 +18,7 @@ import chatRoutes from "./routes/chat.routes";
 import auditRoutes from './routes/audit.routes';
 import authRoutes from './routes/auth.routes';
 import jobRoutes from './routes/job.routes';
+import automationRoutes from './routes/automation.routes';
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use('/api/v1/notifications', notificationRoutes);
 app.use("/api/v1/chats", chatRoutes);
 app.use('/api/v1/audit', auditRoutes);
 app.use('/api/v1/jobs', jobRoutes);
+app.use('/api/v1/automation', automationRoutes);
 
 // Global error handler
 app.use(errorHandler);
