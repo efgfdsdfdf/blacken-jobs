@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Bot, Plus, Briefcase, MapPin, Search, CheckCircle2, Play, Activity, Terminal } from "lucide-react"
+import { Bot, Plus, Briefcase, MapPin, Search, CheckCircle2, Play, Activity, Terminal, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { toggleAutomation, updatePortfolioUrl, forceRunJobWorker, getAgentLogs } from "./actions"
+import { toggleAutomation, updatePortfolioUrl, forceRunJobWorker, getAgentLogs, saveIndeedCredentials, getIndeedCredentials } from "./actions"
 
 interface Props {
   initialIsActive: boolean;
@@ -25,6 +25,34 @@ export function AutomationClient({ initialIsActive, initialPortfolioUrl }: Props
   const [logs, setLogs] = React.useState<any[]>([])
   const [isLogsOpen, setIsLogsOpen] = React.useState(false)
   const [isLoadingLogs, setIsLoadingLogs] = React.useState(false)
+  const [indeedEmail, setIndeedEmail] = React.useState("")
+  const [indeedPassword, setIndeedPassword] = React.useState("")
+  const [savingIndeed, setSavingIndeed] = React.useState(false)
+
+  React.useEffect(() => {
+    async function loadCredentials() {
+      try {
+        const creds = await getIndeedCredentials()
+        if (creds) {
+          setIndeedEmail(creds.email)
+          setIndeedPassword(creds.password)
+        }
+      } catch (err) {}
+    }
+    loadCredentials()
+  }, [])
+
+  const handleSaveIndeed = async () => {
+    setSavingIndeed(true)
+    try {
+      await saveIndeedCredentials(indeedEmail, indeedPassword)
+      toast.success("Indeed credentials saved successfully!")
+    } catch (e) {
+      toast.error("Failed to save Indeed credentials")
+    } finally {
+      setSavingIndeed(false)
+    }
+  }
 
   const handleToggle = (checked: boolean) => {
     setIsActive(checked) // Optimistic update
@@ -242,6 +270,50 @@ export function AutomationClient({ initialIsActive, initialPortfolioUrl }: Props
                 </ScrollArea>
               </DialogContent>
             </Dialog>
+          </CardFooter>
+        </Card>
+
+        {/* Connected Accounts & Job Boards */}
+        <Card className="glass-card relative overflow-hidden group border-white/5">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold text-zinc-100">Job Board Integrations</CardTitle>
+            <CardDescription className="text-zinc-400 mt-1">
+              Provide your login credentials so the agent can log in and apply on your behalf.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-3">
+                <Label className="text-zinc-300">Indeed Email / Username</Label>
+                <Input 
+                  type="email" 
+                  value={indeedEmail} 
+                  onChange={(e) => setIndeedEmail(e.target.value)}
+                  placeholder="name@example.com" 
+                  className="bg-zinc-950/50 border-white/10 focus-visible:border-primary/50 transition-colors" 
+                />
+              </div>
+              <div className="space-y-3">
+                <Label className="text-zinc-300">Indeed Password</Label>
+                <Input 
+                  type="password" 
+                  value={indeedPassword} 
+                  onChange={(e) => setIndeedPassword(e.target.value)}
+                  placeholder="••••••••••••" 
+                  className="bg-zinc-950/50 border-white/10 focus-visible:border-primary/50 transition-colors" 
+                />
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="bg-black/20 border-t border-white/5 pt-4 flex justify-end rounded-b-xl">
+            <Button 
+              onClick={handleSaveIndeed} 
+              disabled={savingIndeed}
+              className="bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/80"
+            >
+              {savingIndeed && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Save Credentials
+            </Button>
           </CardFooter>
         </Card>
 

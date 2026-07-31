@@ -90,6 +90,10 @@ class JobWorkerService {
       website: automation.user.profile?.website || ''
     };
 
+    const careerProfile = await prisma.careerProfile.findUnique({
+      where: { userId: automation.userId }
+    });
+
     for (const remoteJob of foundJobs) {
       const jobUrl = remoteJob.url || remoteJob.apply_url;
       
@@ -98,6 +102,40 @@ class JobWorkerService {
       });
 
       if (existing) continue;
+
+      // --- AI Match Filtering ---
+      const careerContext = careerProfile ? `
+        Preferred Job Titles: ${careerProfile.preferredJobTitles?.join(", ") || "None"}
+        Skills: ${careerProfile.skills?.join(", ") || "None"}
+        Location Preference: ${careerProfile.locationPreference || "None"}
+        Job Title: ${careerProfile.currentJobTitle || "None"}
+      ` : `Job Title: ${automation.user.profile?.jobTitle || "Software Engineer"}`;
+
+      const matchPrompt = `Compare this job listing with the candidate's profile.
+Candidate Profile:
+${careerContext}
+
+Job Listing:
+Title: ${remoteJob.position}
+Company: ${remoteJob.company}
+Description: ${remoteJob.description}
+
+Does this job match the candidate's target job title, core skills, or profile? Return a JSON object with a single boolean field: "isMatch". Only return raw JSON.`;
+
+      let isMatch = true;
+      try {
+        const matchCompletion = await aiService.generateResponse([{ role: "user", content: matchPrompt }]);
+        const cleanedJson = matchCompletion.replace(/^```(json)?/, '').replace(/```$/, '').trim();
+        const parsedMatch = JSON.parse(cleanedJson);
+        isMatch = parsedMatch.isMatch;
+      } catch (err) {
+        logger.warn("AI Match filtering failed, defaulting to true", err);
+      }
+
+      if (!isMatch) {
+        logger.info(`🤖 Job Worker: Skipping '${remoteJob.position}' at ${remoteJob.company} - did not match profile.`);
+        continue;
+      }
 
       let applyStatus = "FOUND";
       let coverLetter = "";

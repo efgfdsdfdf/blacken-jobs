@@ -22,8 +22,9 @@ export async function GET(
       return new NextResponse("Not Found", { status: 404 })
     }
 
-    // If prep report doesn't exist, generate it
-    if (!interview.prepReport || !interview.mockQuestions) {
+    // If prep report doesn't exist or mock questions are empty, generate it
+    const hasQuestions = Array.isArray(interview.mockQuestions) && (interview.mockQuestions as string[]).length > 0;
+    if (!interview.prepReport || !interview.mockQuestions || !hasQuestions) {
       const careerProfile = await prisma.careerProfile.findUnique({
         where: { userId: session.id }
       })

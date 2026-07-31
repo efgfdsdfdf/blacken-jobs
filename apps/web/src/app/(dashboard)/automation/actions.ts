@@ -260,3 +260,50 @@ export async function getAgentLogs() {
     createdAt: log.createdAt
   }))
 }
+
+export async function saveIndeedCredentials(email: string, password: string) {
+  const user = await requireAuth()
+
+  await prisma.connectedAccount.upsert({
+    where: {
+      userId_platform: {
+        userId: user.id,
+        platform: "INDEED"
+      }
+    },
+    update: {
+      platformUserId: email,
+      accessToken: password,
+      isActive: true,
+      lastSyncAt: new Date()
+    },
+    create: {
+      userId: user.id,
+      platform: "INDEED",
+      platformUserId: email,
+      accessToken: password,
+      isActive: true,
+      lastSyncAt: new Date()
+    }
+  })
+}
+
+export async function getIndeedCredentials() {
+  const user = await requireAuth()
+
+  const account = await prisma.connectedAccount.findUnique({
+    where: {
+      userId_platform: {
+        userId: user.id,
+        platform: "INDEED"
+      }
+    }
+  })
+
+  if (!account) return null
+
+  return {
+    email: account.platformUserId || "",
+    password: account.accessToken || ""
+  }
+}
