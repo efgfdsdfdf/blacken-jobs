@@ -72,21 +72,66 @@ class JobWorkerService {
 
       if (indeedAccount && indeedAccount.platformUserId && indeedAccount.accessToken) {
         logger.info(`🤖 Job Worker: Found Indeed credentials. Launching Indeed crawler...`);
+        const keywords = automation.keywords && automation.keywords.length > 0 ? automation.keywords[0] : 'software developer';
+        
+        await prisma.auditLog.create({
+          data: {
+            actorId: automation.userId,
+            action: "UPDATE",
+            entity: "Agent Run",
+            metadata: { message: `🤖 Indeed Crawler: Logging in with ${indeedAccount.platformUserId}...` }
+          }
+        }).catch(() => {});
+
         const indeedJobs = await browserService.indeedLoginAndSearch(
           indeedAccount.platformUserId,
           indeedAccount.accessToken,
-          automation.keywords && automation.keywords.length > 0 ? automation.keywords[0] : 'software developer'
+          keywords
         );
+
         if (indeedJobs && indeedJobs.length > 0) {
           foundJobs.push(...indeedJobs);
+          await prisma.auditLog.create({
+            data: {
+              actorId: automation.userId,
+              action: "UPDATE",
+              entity: "Agent Run",
+              metadata: { message: `🤖 Indeed Crawler: Successfully scraped ${indeedJobs.length} matches for '${keywords}'.` }
+            }
+          }).catch(() => {});
+        } else {
+          await prisma.auditLog.create({
+            data: {
+              actorId: automation.userId,
+              action: "UPDATE",
+              entity: "Agent Run",
+              metadata: { message: `🤖 Indeed Crawler: Completed session. No new matching jobs found on Indeed.` }
+            }
+          }).catch(() => {});
         }
       }
     } catch (indeedError) {
       logger.error("Error during Indeed crawling phase:", indeedError);
+      await prisma.auditLog.create({
+        data: {
+          actorId: automation.userId,
+          action: "UPDATE",
+          entity: "Agent Run",
+          metadata: { message: `⚠️ Indeed Crawler error: Could not complete login or search.` }
+        }
+      }).catch(() => {});
     }
 
     if (foundJobs.length === 0) {
       logger.info(`🤖 Job Worker: No real jobs found this cycle for keywords: ${automation.keywords}`);
+      await prisma.auditLog.create({
+        data: {
+          actorId: automation.userId,
+          action: "UPDATE",
+          entity: "Agent Run",
+          metadata: { message: `🤖 Cycle finished: No jobs found matching target roles.` }
+        }
+      }).catch(() => {});
       return;
     }
 
@@ -118,6 +163,15 @@ class JobWorkerService {
         Job Title: ${careerProfile.currentJobTitle || "None"}
       ` : `Job Title: ${automation.user.profile?.jobTitle || "Software Engineer"}`;
 
+      await prisma.auditLog.create({
+        data: {
+          actorId: automation.userId,
+          action: "UPDATE",
+          entity: "Agent Run",
+          metadata: { message: `🤖 Matcher: Evaluating '${remoteJob.position}' at ${remoteJob.company} against profile...` }
+        }
+      }).catch(() => {});
+
       const matchPrompt = `Compare this job listing with the candidate's profile.
 Candidate Profile:
 ${careerContext}
@@ -141,6 +195,14 @@ Does this job match the candidate's target job title, core skills, or profile? R
 
       if (!isMatch) {
         logger.info(`🤖 Job Worker: Skipping '${remoteJob.position}' at ${remoteJob.company} - did not match profile.`);
+        await prisma.auditLog.create({
+          data: {
+            actorId: automation.userId,
+            action: "UPDATE",
+            entity: "Agent Run",
+            metadata: { message: `⏭️ Matcher: Skipped '${remoteJob.position}' at ${remoteJob.company} (does not match target profile).` }
+          }
+        }).catch(() => {});
         continue;
       }
 
@@ -152,6 +214,16 @@ Does this job match the candidate's target job title, core skills, or profile? R
       // -------------------------------------------------------------------------
       if (automation.autoApply && jobUrl) {
         logger.info(`🤖 Generating custom Cover Letter for ${remoteJob.company}...`);
+        
+        await prisma.auditLog.create({
+          data: {
+            actorId: automation.userId,
+            action: "UPDATE",
+            entity: "Agent Run",
+            metadata: { message: `🤖 Auto-Apply: Match approved! Writing custom cover letter for ${remoteJob.company}...` }
+          }
+        }).catch(() => {});
+
         try {
           // Generate cover letter via Claude
           const prompt = `Write a 3-paragraph cover letter for a ${remoteJob.position} role at ${remoteJob.company}. My name is ${userProfile.firstName} ${userProfile.lastName}.`;
@@ -163,10 +235,30 @@ Does this job match the candidate's target job title, core skills, or profile? R
           const portfolioUrl = userProfile.website || "https://github.com/ezeil";
 
           logger.info(`🤖 Launching Playwright to apply to ${remoteJob.company}...`);
+          
+          await prisma.auditLog.create({
+            data: {
+              actorId: automation.userId,
+              action: "UPDATE",
+              entity: "Agent Run",
+              metadata: { message: `🤖 Auto-Apply: Launching browser crawler to apply at ${remoteJob.company}...` }
+            }
+          }).catch(() => {});
+
           const success = await browserService.autoApply(jobUrl, userProfile, portfolioUrl, coverLetter);
           
           if (success) {
             applyStatus = "APPLIED";
+            
+            await prisma.auditLog.create({
+              data: {
+                actorId: automation.userId,
+                action: "UPDATE",
+                entity: "Agent Run",
+                metadata: { message: `✅ Auto-Apply: Application submitted successfully to ${remoteJob.company}!` }
+              }
+            }).catch(() => {});
+
             // Fire off the email notification asynchronously
             emailService.sendApplicationSuccessEmail(
               userProfile.email,
@@ -176,6 +268,15 @@ Does this job match the candidate's target job title, core skills, or profile? R
           } else {
             applyStatus = "FOUND";
             logger.warn(`🤖 Auto-apply failed for ${remoteJob.company}. Marked for manual review.`);
+            
+            await prisma.auditLog.create({
+              data: {
+                actorId: automation.userId,
+                action: "UPDATE",
+                entity: "Agent Run",
+                metadata: { message: `⚠️ Auto-Apply: Could not auto-submit form for ${remoteJob.company}. Saved to dashboard for manual review.` }
+              }
+            }).catch(() => {});
           }
         } catch (err) {
           logger.error("Error during auto-apply phase:", err);
