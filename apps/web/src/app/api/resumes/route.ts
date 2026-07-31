@@ -16,12 +16,11 @@ export async function GET(req: Request) {
     return new NextResponse(error.message, { status: 500 })
   }
 }
-
 export async function POST(req: Request) {
   try {
     const user = await requireAuth()
     const body = await req.json()
-    const { name, content, fileUrl, isBase } = body
+    const { title, name, content, fileUrl, isBase } = body
 
     let atsScore = 0
     let parsedData = {}
@@ -48,16 +47,18 @@ Return a JSON object with keys: atsScore (0-100), parsedData (object with skills
     const resume = await prisma.resume.create({
       data: {
         userId: user.id,
-        name,
-        content,
+        title: title || name || "Untitled Resume",
+        fileName: name || title || "resume.txt",
+        content: content || "",
         fileUrl,
-        isBase: isBase || false,
+        isDefault: isBase || false,
         atsScore,
         parsedData
       }
     })
     return NextResponse.json(resume)
   } catch (error: any) {
+    console.error("Create resume error:", error)
     return new NextResponse(error.message, { status: 500 })
   }
 }
