@@ -143,7 +143,7 @@ class JobWorkerService {
         data: {
           userId: automation.userId,
           company: remoteJob.company || "Unknown Company",
-          role: remoteJob.position || "Remote Role",
+          title: remoteJob.position || "Remote Role",
           description: remoteJob.description,
           url: jobUrl,
           matchScore: Math.floor(Math.random() * 15) + 85,
@@ -152,7 +152,7 @@ class JobWorkerService {
         }
       });
 
-      logger.info(`🤖 Job Worker: Saved job: ${job.company} - ${job.role} (Status: ${applyStatus})`);
+      logger.info(`🤖 Job Worker: Saved job: ${job.company} - ${job.title} (Status: ${applyStatus})`);
     }
 
     await prisma.automation.update({

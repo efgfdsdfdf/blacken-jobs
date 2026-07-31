@@ -177,7 +177,7 @@ export async function forceRunJobWorker() {
       data: {
         userId: user.id,
         company: selectedJob.company_name,
-        role: selectedJob.title,
+        title: selectedJob.title,
         url: selectedJob.url,
         description: tailoredSummary,
         status: automation.autoApply ? "APPLIED" : "FOUND",
