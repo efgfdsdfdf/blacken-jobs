@@ -7,7 +7,7 @@ import { emailService } from "./email.service";
 class JobWorkerService {
   private isRunning: boolean = false;
   private intervalId: NodeJS.Timeout | null = null;
-  private readonly INTERVAL_MS = 1000 * 60 * 60; // 1 hour
+  private readonly INTERVAL_MS = 1000 * 60 * 30; // 30 minutes
 
   constructor() {
     setTimeout(() => this.start(), 5000);
