@@ -173,7 +173,7 @@ export async function forceRunJobWorker() {
       data: { actorId: user.id, action: "CREATE", entity: "Agent Task", metadata: { message: "Saving tailored application to your dashboard..." } }
     })
 
-    await prisma.job.create({
+    const job = await prisma.job.create({
       data: {
         userId: user.id,
         company: selectedJob.company_name,
@@ -181,11 +181,22 @@ export async function forceRunJobWorker() {
         url: selectedJob.url,
         description: tailoredSummary,
         status: automation.autoApply ? "APPLIED" : "FOUND",
-        coverLetter,
         matchScore: Math.floor(Math.random() * (99 - 85 + 1) + 85),
-        appliedAt: automation.autoApply ? new Date() : null
       }
     })
+
+    if (automation.autoApply) {
+      await prisma.application.create({
+        data: {
+          userId: user.id,
+          jobId: job.id,
+          status: "APPLIED",
+          coverLetter,
+          method: "AUTO_APPLIED",
+          submittedAt: new Date()
+        }
+      })
+    }
 
     // --- STEP 5: Send Email ---
     if (automation.autoApply) {

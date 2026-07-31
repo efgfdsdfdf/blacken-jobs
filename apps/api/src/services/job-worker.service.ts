@@ -147,10 +147,22 @@ class JobWorkerService {
           description: remoteJob.description,
           url: jobUrl,
           matchScore: Math.floor(Math.random() * 15) + 85,
-          coverLetter: coverLetter,
           status: applyStatus as any, 
         }
       });
+
+      // If auto-applied, create application record with cover letter
+      if (applyStatus === "APPLIED") {
+        await prisma.application.create({
+          data: {
+            userId: automation.userId,
+            jobId: job.id,
+            status: "APPLIED",
+            coverLetter: coverLetter,
+            method: "AUTO_APPLIED"
+          }
+        });
+      }
 
       logger.info(`🤖 Job Worker: Saved job: ${job.company} - ${job.title} (Status: ${applyStatus})`);
     }
