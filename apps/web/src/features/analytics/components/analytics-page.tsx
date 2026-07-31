@@ -52,14 +52,19 @@ export function AnalyticsPage({ data }: { data: any }) {
                 {weeklyActivity.map((day: any, i: number) => {
                   const max = Math.max(...weeklyActivity.map((d: any) => d.count), 1)
                   const height = `${(day.count / max) * 100}%`
+                  const isMax = day.count === max && day.count > 0
                   
                   return (
                     <div key={i} className="flex flex-col items-center gap-3 w-full group relative">
-                      <div className="absolute -top-8 bg-zinc-800 text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                        {day.count}
+                      <div className="absolute -top-8 bg-zinc-800 text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                        {day.count} applications
                       </div>
                       <div 
-                        className="w-full max-w-[40px] bg-gradient-to-t from-primary/20 to-primary/80 rounded-t-md transition-all duration-500 hover:from-primary/40 hover:to-primary hover:shadow-[0_0_15px_rgba(var(--primary),0.5)]"
+                        className={`w-full max-w-[40px] rounded-t-md transition-all duration-500 ${
+                          isMax 
+                            ? "bg-gradient-to-t from-purple-500/20 to-purple-500 hover:from-purple-500/40 hover:to-purple-400 hover:shadow-[0_0_15px_rgba(168,85,247,0.5)]" 
+                            : "bg-gradient-to-t from-primary/20 to-primary/80 hover:from-primary/40 hover:to-primary hover:shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+                        }`}
                         style={{ height: height === "0%" ? "5px" : height }}
                       />
                       <span className="text-xs text-muted-foreground uppercase">{day.date}</span>
