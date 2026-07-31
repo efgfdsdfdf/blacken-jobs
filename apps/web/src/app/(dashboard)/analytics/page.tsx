@@ -38,7 +38,16 @@ export default async function Page() {
   
   const avgMatchScore = applications.reduce((acc, app) => acc + (app.job?.matchScore || 0), 0) / (totalApplications || 1)
 
-  // Generate 7 days of activity mock data based on real data if possible
+  // Funnel actual counts
+  const funnel = {
+    found: totalJobsFound,
+    applied: totalApplications,
+    underReview,
+    interviewing,
+    offer: offers
+  }
+
+  // Generate 7 days of activity based purely on real data
   const today = new Date()
   const last7Days = Array.from({ length: 7 }).map((_, i) => {
     const d = new Date(today)
@@ -47,15 +56,73 @@ export default async function Page() {
     
     // Count apps on this day
     const count = applications.filter(a => {
-      const appDate = new Date(a.appliedAt)
+      const appDate = new Date(a.submittedAt || a.createdAt)
       return appDate.toDateString() === d.toDateString()
     }).length
     
     return {
       date: d.toLocaleDateString(undefined, { weekday: 'short' }),
-      count: count || Math.floor(Math.random() * 5) // Fallback to random for visual purposes if no data
+      count
     }
   })
+
+  // Group and count actual technologies from user's jobs
+  const skillCounts: Record<string, number> = {}
+  jobs.forEach(j => {
+    // If technologies is a JSON/Array field
+    const techArray = Array.isArray(j.technologies) ? (j.technologies as string[]) : []
+    techArray.forEach(tech => {
+      const name = tech.trim()
+      if (name) {
+        skillCounts[name] = (skillCounts[name] || 0) + 1
+      }
+    })
+  })
+
+  const topSkills = Object.entries(skillCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name, count]) => {
+      const percent = totalJobsFound > 0 ? Math.round((count / totalJobsFound) * 100) : 0
+      return { name, count, percent }
+    })
+
+  // If no skills found, fallback to empty array (no mocks)
+  const finalSkills = topSkills.length > 0 ? topSkills : [
+    { name: "No Data", count: 0, percent: 0 }
+  ]
+
+  // Group and count actual job sources by parsing domain names from URLs
+  const sourcesMap: Record<string, number> = {}
+  jobs.forEach(j => {
+    if (!j.url) return
+    let sourceName = "Direct / Other"
+    const url = j.url.toLowerCase()
+    if (url.includes("indeed.com")) sourceName = "Indeed"
+    else if (url.includes("remoteok.com") || url.includes("remoteok")) sourceName = "RemoteOK"
+    else if (url.includes("remotive.com") || url.includes("remotive")) sourceName = "Remotive"
+    else if (url.includes("linkedin.com")) sourceName = "LinkedIn"
+    
+    sourcesMap[sourceName] = (sourcesMap[sourceName] || 0) + 1
+  })
+
+  const sourcesColors: Record<string, string> = {
+    "Indeed": "#2164f4",
+    "RemoteOK": "#ff4747",
+    "Remotive": "#6366f1",
+    "LinkedIn": "#0077b5",
+    "Direct / Other": "#71717a"
+  }
+
+  const sources = Object.entries(sourcesMap).map(([name, value]) => ({
+    name,
+    value,
+    color: sourcesColors[name] || "#3b82f6"
+  }))
+
+  const finalSources = sources.length > 0 ? sources : [
+    { name: "No Data", value: 0, color: "#71717a" }
+  ]
 
   const analyticsData = {
     overview: {
@@ -63,30 +130,13 @@ export default async function Page() {
       totalApplications,
       responseRate,
       interviewRate,
-      avgMatchScore: Math.round(avgMatchScore),
+      avgMatchScore: Math.round(avgMatchScore) || 0,
       offers
     },
-    funnel: {
-      found: totalJobsFound || 100,
-      applied: totalApplications || 45,
-      underReview: underReview || 25,
-      interviewing: interviewing || 8,
-      offer: offers || 2
-    },
+    funnel,
     weeklyActivity: last7Days,
-    topSkills: [
-      { name: "React", count: 24, percent: 80 },
-      { name: "TypeScript", count: 20, percent: 66 },
-      { name: "Node.js", count: 15, percent: 50 },
-      { name: "AWS", count: 12, percent: 40 },
-      { name: "Next.js", count: 10, percent: 33 },
-    ],
-    sources: [
-      { name: "LinkedIn", value: 45, color: "#0077b5" },
-      { name: "Indeed", value: 25, color: "#2164f4" },
-      { name: "Otta", value: 20, color: "#00b289" },
-      { name: "Direct", value: 10, color: "#6366f1" },
-    ]
+    topSkills: finalSkills,
+    sources: finalSources
   }
 
   return <AnalyticsPage data={analyticsData} />
