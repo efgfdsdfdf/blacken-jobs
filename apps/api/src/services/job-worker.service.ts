@@ -62,20 +62,7 @@ class JobWorkerService {
   private async processAutomation(automation: any) {
     logger.info(`🤖 Job Worker: Processing automation '${automation.name}' for user ${automation.userId}`);
     
-    // --- Phase A: Fetch RemoteOK jobs ---
-    try {
-      const tags = automation.keywords && automation.keywords.length > 0 
-        ? automation.keywords.join(',') 
-        : 'react,node';
-        
-      const response = await fetch(`https://remoteok.com/api?tags=${encodeURIComponent(tags)}`);
-      if (response.ok) {
-        const data = await response.json() as any[];
-        foundJobs = data.slice(1, 4);
-      }
-    } catch (error) {
-      logger.error(`Error fetching RemoteOK jobs for automation ${automation.id}:`, error);
-    }
+    let foundJobs: any[] = [];
 
     // --- Phase B: Fetch Indeed jobs if credentials exist ---
     try {
