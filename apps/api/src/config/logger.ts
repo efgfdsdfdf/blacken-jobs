@@ -40,10 +40,9 @@ export const logger = winston.createLogger({
   ],
 });
 
-if (env.NODE_ENV !== 'production') {
-  logger.add(
-    new winston.transports.Console({
-      format: consoleFormat,
-    })
-  );
-}
+// Always log to console in cloud environments (Render, etc.) to capture logs
+logger.add(
+  new winston.transports.Console({
+    format: env.NODE_ENV === 'production' ? winston.format.json() : consoleFormat,
+  })
+);
